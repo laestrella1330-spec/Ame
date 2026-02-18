@@ -1,0 +1,15 @@
+{
+  "name": "ame-videochat",
+  "private": true,
+  "workspaces": ["server", "client"],
+  "scripts": {
+    "dev:server": "cd server && npm run dev",
+    "dev:client": "cd client && npm run dev",
+    "build": "cd client && npm run build && cd ../server && npm run build",
+    "start": "cd server && npm run start",
+    "seed-admin": "cd server && npm run seed-admin"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
