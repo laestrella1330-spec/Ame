@@ -8,7 +8,8 @@ import { fileURLToPath } from 'url';
 import { config } from './config.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-import { initDb, saveDb } from './db/connection.js';
+import bcrypt from 'bcryptjs';
+import { initDb, saveDb, queryOne, execute } from './db/connection.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimit.js';
 import { setupSocketHandlers } from './signaling/socketHandler.js';
 import authRoutes from './routes/auth.js';
@@ -21,6 +22,15 @@ async function main() {
   // Initialize database
   await initDb();
   console.log('Database initialized.');
+
+  // Auto-seed admin user if none exists
+  const existingAdmin = queryOne('SELECT id FROM admins WHERE username = ?', [config.adminUsername]);
+  if (!existingAdmin) {
+    const hash = bcrypt.hashSync(config.adminPassword, 12);
+    execute('INSERT INTO admins (username, password_hash) VALUES (?, ?)', [config.adminUsername, hash]);
+    saveDb();
+    console.log(`Admin user "${config.adminUsername}" created.`);
+  }
 
   const app = express();
   const httpServer = createServer(app);
