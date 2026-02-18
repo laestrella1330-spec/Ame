@@ -93,6 +93,8 @@ export default function AdminDashboard() {
   const [monitoredSession, setMonitoredSession] = useState<string | null>(null);
   const [monitorMessages, setMonitorMessages] = useState<MonitorMessage[]>([]);
   const [monitorInfo, setMonitorInfo] = useState<{ userA: string; userB: string; startedAt: string } | null>(null);
+  const monitorPanelRef = useRef<HTMLDivElement>(null);
+  const monitorMsgsEndRef = useRef<HTMLDivElement>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -134,6 +136,18 @@ export default function AdminDashboard() {
     if (activeTab === 'users') fetchUsers();
     if (activeTab === 'sessions') fetchSessions();
   }, [activeTab, fetchUsers, fetchSessions]);
+
+  // Scroll the monitor panel into view when monitoring starts
+  useEffect(() => {
+    if (monitoredSession && monitorPanelRef.current) {
+      setTimeout(() => monitorPanelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 100);
+    }
+  }, [monitoredSession]);
+
+  // Auto-scroll message feed to latest message
+  useEffect(() => {
+    monitorMsgsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  }, [monitorMessages]);
 
   // Admin Socket for monitoring
   useEffect(() => {
@@ -532,7 +546,106 @@ export default function AdminDashboard() {
         {/* ── Active Sessions Tab ── */}
         {activeTab === 'sessions' && (
           <div className="space-y-4">
-            <div className="flex justify-end">
+
+            {/* ── Live Monitor Room (shown first when active) ── */}
+            {monitoredSession && (
+              <div ref={monitorPanelRef} className="glass rounded-2xl border border-violet-500/40 overflow-hidden">
+                {/* Room header */}
+                <div className="flex items-center justify-between px-5 py-4 bg-violet-600/15 border-b border-violet-500/25">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <span className="w-2.5 h-2.5 rounded-full bg-green-400 animate-pulse shrink-0" />
+                    <span className="text-white font-semibold">Live Monitor Room</span>
+                    <span className="text-slate-500 text-xs font-mono">#{monitoredSession.slice(0, 8)}</span>
+                    {monitorInfo && (
+                      <>
+                        <span className="hidden sm:block text-slate-600 text-xs">|</span>
+                        <span className="text-slate-400 text-xs">
+                          <span className="text-blue-400">User A</span> {monitorInfo.userA.slice(0, 10)}…
+                          {' '}<span className="text-slate-600">↔</span>{' '}
+                          <span className="text-emerald-400">User B</span> {monitorInfo.userB?.slice(0, 10) ?? '?'}…
+                        </span>
+                        <span className="text-slate-600 text-xs">
+                          started {new Date(monitorInfo.startedAt).toLocaleTimeString()}
+                        </span>
+                      </>
+                    )}
+                  </div>
+                  <button
+                    onClick={handleStopMonitor}
+                    className="px-3 py-1.5 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-lg text-xs border border-red-600/30 transition-all shrink-0"
+                  >
+                    Stop Monitoring
+                  </button>
+                </div>
+
+                {/* Legend */}
+                <div className="flex gap-4 px-5 py-2 bg-black/10 border-b border-white/5 text-xs">
+                  <span className="text-blue-400 font-medium">■ User A</span>
+                  <span className="text-emerald-400 font-medium">■ User B</span>
+                  <span className="text-slate-600 ml-auto">Read-only · users cannot see you</span>
+                </div>
+
+                {/* Message feed */}
+                <div className="h-[480px] overflow-y-auto p-5 space-y-3 bg-black/20">
+                  {monitorMessages.length === 0 ? (
+                    <div className="h-full flex flex-col items-center justify-center text-slate-600 text-sm gap-3">
+                      <span className="text-4xl opacity-40">💬</span>
+                      <p className="font-medium">Monitoring active</p>
+                      <p className="text-xs text-slate-700">
+                        Text messages sent by users will appear here in real-time.
+                      </p>
+                      <p className="text-xs text-slate-700">
+                        Video and audio are peer-to-peer and not accessible.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      {monitorMessages.map((m, i) => {
+                        const isUserA = monitorInfo && m.fromUserId === monitorInfo.userA;
+                        return (
+                          <div
+                            key={i}
+                            className={`flex gap-3 ${isUserA ? 'justify-start' : 'justify-end'}`}
+                          >
+                            {isUserA && (
+                              <div className="shrink-0 w-7 h-7 rounded-full bg-blue-600/30 border border-blue-500/30 flex items-center justify-center text-xs text-blue-400 font-bold">
+                                A
+                              </div>
+                            )}
+                            <div className={`max-w-[65%] ${isUserA ? '' : 'order-first'}`}>
+                              <div
+                                className={`px-3 py-2 rounded-2xl text-sm break-words ${
+                                  isUserA
+                                    ? 'bg-blue-600/20 text-blue-100 rounded-tl-sm border border-blue-500/20'
+                                    : 'bg-emerald-600/20 text-emerald-100 rounded-tr-sm border border-emerald-500/20'
+                                }`}
+                              >
+                                {m.text}
+                              </div>
+                              <div className={`text-xs text-slate-600 mt-0.5 ${isUserA ? 'text-left' : 'text-right'}`}>
+                                {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                              </div>
+                            </div>
+                            {!isUserA && (
+                              <div className="shrink-0 w-7 h-7 rounded-full bg-emerald-600/30 border border-emerald-500/30 flex items-center justify-center text-xs text-emerald-400 font-bold">
+                                B
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })}
+                      <div ref={monitorMsgsEndRef} />
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Sessions list header */}
+            <div className="flex items-center justify-between">
+              <h3 className="text-slate-300 text-sm font-medium">
+                {activeSessions.length === 0 ? 'No active sessions' : `${activeSessions.length} active session${activeSessions.length !== 1 ? 's' : ''}`}
+              </h3>
               <button
                 onClick={fetchSessions}
                 className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-slate-300 rounded-lg text-sm border border-white/10"
@@ -541,7 +654,7 @@ export default function AdminDashboard() {
               </button>
             </div>
 
-            {/* Sessions list */}
+            {/* Sessions table */}
             <div className="glass rounded-2xl overflow-hidden">
               <table className="w-full text-sm">
                 <thead>
@@ -558,23 +671,23 @@ export default function AdminDashboard() {
                     <tr><td colSpan={5} className="p-6 text-center text-slate-500">No active sessions right now</td></tr>
                   ) : (
                     activeSessions.map((s) => (
-                      <tr key={s.id} className={`border-t border-white/5 ${monitoredSession === s.id ? 'bg-violet-600/10' : ''}`}>
+                      <tr key={s.id} className={`border-t border-white/5 transition-colors ${monitoredSession === s.id ? 'bg-violet-600/10' : 'hover:bg-white/[0.02]'}`}>
                         <td className="p-3 text-white font-mono text-xs">{s.id.slice(0, 12)}…</td>
-                        <td className="p-3 text-slate-400 font-mono text-xs">{s.user_a_id.slice(0, 10)}…</td>
-                        <td className="p-3 text-slate-400 font-mono text-xs">{s.user_b_id?.slice(0, 10) ?? '(waiting)'}</td>
+                        <td className="p-3 text-blue-400/70 font-mono text-xs">{s.user_a_id.slice(0, 10)}…</td>
+                        <td className="p-3 text-emerald-400/70 font-mono text-xs">{s.user_b_id?.slice(0, 10) ?? '(waiting)'}</td>
                         <td className="p-3 text-slate-400 text-xs">{new Date(s.started_at).toLocaleTimeString()}</td>
                         <td className="p-3">
                           {monitoredSession === s.id ? (
-                            <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-violet-600/20 text-violet-400 rounded text-xs border border-violet-600/30">
-                              <span className="w-1.5 h-1.5 rounded-full bg-violet-400 animate-pulse" />
-                              Monitoring
+                            <span className="inline-flex items-center gap-1.5 px-2 py-1 bg-violet-600/20 text-violet-300 rounded text-xs border border-violet-600/30">
+                              <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
+                              Live
                             </span>
                           ) : (
                             <button
                               onClick={() => handleMonitor(s.id)}
-                              className="px-3 py-1 bg-violet-600/30 hover:bg-violet-600/50 text-violet-400 rounded text-xs border border-violet-600/30 transition-all"
+                              className="px-3 py-1.5 bg-violet-600/30 hover:bg-violet-600/50 text-violet-300 rounded-lg text-xs border border-violet-600/30 transition-all font-medium"
                             >
-                              Monitor Room
+                              Open Room
                             </button>
                           )}
                         </td>
@@ -584,58 +697,6 @@ export default function AdminDashboard() {
                 </tbody>
               </table>
             </div>
-
-            {/* Inline monitoring room — appears when a session is being monitored */}
-            {monitoredSession && (
-              <div className="glass rounded-2xl border border-violet-500/40 overflow-hidden">
-                {/* Room header */}
-                <div className="flex items-center justify-between px-4 py-3 bg-violet-600/10 border-b border-violet-500/20">
-                  <div className="flex items-center gap-3">
-                    <span className="w-2 h-2 rounded-full bg-violet-400 animate-pulse" />
-                    <span className="text-violet-300 font-semibold text-sm">Live Monitor Room</span>
-                    <span className="text-slate-500 text-xs font-mono">#{monitoredSession.slice(0, 8)}</span>
-                    {monitorInfo && (
-                      <span className="text-slate-400 text-xs">
-                        {monitorInfo.userA.slice(0, 8)}… ↔ {monitorInfo.userB?.slice(0, 8) ?? '?'}…
-                      </span>
-                    )}
-                  </div>
-                  <button
-                    onClick={handleStopMonitor}
-                    className="px-3 py-1 bg-red-600/20 hover:bg-red-600/40 text-red-400 rounded-lg text-xs border border-red-600/30 transition-all"
-                  >
-                    Stop Monitoring
-                  </button>
-                </div>
-
-                {/* Message feed */}
-                <div className="h-72 overflow-y-auto p-4 space-y-2 bg-black/20">
-                  {monitorMessages.length === 0 ? (
-                    <div className="h-full flex flex-col items-center justify-center text-slate-600 text-sm gap-2">
-                      <span className="text-2xl">👁️</span>
-                      <p>Monitoring active — waiting for messages…</p>
-                      <p className="text-xs">Text messages sent by users in this room will appear here.</p>
-                    </div>
-                  ) : (
-                    monitorMessages.map((m, i) => (
-                      <div key={i} className="flex items-start gap-3 text-sm">
-                        <span className="text-slate-600 text-xs shrink-0 pt-0.5 w-16">
-                          {new Date(m.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
-                        </span>
-                        <span className="text-violet-400 text-xs shrink-0 font-mono pt-0.5">
-                          {m.fromUserId.slice(0, 8)}…
-                        </span>
-                        <span className="text-slate-200 break-words">{m.text}</span>
-                      </div>
-                    ))
-                  )}
-                </div>
-
-                <div className="px-4 py-2 bg-black/10 border-t border-white/5 text-xs text-slate-600">
-                  Read-only observer mode — users cannot see that you are monitoring.
-                </div>
-              </div>
-            )}
           </div>
         )}
       </div>
