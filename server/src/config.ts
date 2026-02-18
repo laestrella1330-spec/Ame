@@ -11,11 +11,26 @@ export const config = {
   port: parseInt(process.env.PORT || '3001', 10),
   nodeEnv,
   dbPath: process.env.DB_PATH || './data/videochat.db',
+
+  // JWT secret shared between admin and user tokens
   jwtSecret: process.env.JWT_SECRET || 'dev-secret',
+
+  // Admin credentials (auto-seeded on startup)
   adminUsername: process.env.ADMIN_USERNAME || 'admin',
   adminPassword: process.env.ADMIN_PASSWORD || 'admin123',
-  // In production (same-origin), set CORS_ORIGIN to the Render URL or leave unset
+
+  // CORS — in production (same-origin) leave unset; set for local dev
   corsOrigin: process.env.CORS_ORIGIN || (nodeEnv === 'production' ? false as const : 'http://localhost:5173'),
+
+  // Facebook OAuth — create app at https://developers.facebook.com
+  facebookAppId: process.env.FACEBOOK_APP_ID || '',
+  facebookAppSecret: process.env.FACEBOOK_APP_SECRET || '',
+  facebookCallbackUrl: process.env.FACEBOOK_CALLBACK_URL || 'http://localhost:3001/api/auth/facebook/callback',
+
+  // Twilio SMS OTP — if not set, OTP is logged to console (dev mode)
+  twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || '',
+  twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || '',
+  twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER || '',
 };
 
 export const ICE_SERVERS = [

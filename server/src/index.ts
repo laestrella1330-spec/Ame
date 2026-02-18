@@ -16,10 +16,10 @@ import authRoutes from './routes/auth.js';
 import reportRoutes from './routes/reports.js';
 import banRoutes from './routes/bans.js';
 import sessionRoutes from './routes/sessions.js';
+import userRoutes from './routes/userRoutes.js';
 import { authMiddleware } from './middleware/auth.js';
 
 async function main() {
-  // Initialize database
   await initDb();
   console.log('Database initialized.');
 
@@ -35,7 +35,6 @@ async function main() {
   const app = express();
   const httpServer = createServer(app);
 
-  // Trust proxy when behind reverse proxy (Render, Railway, etc.)
   if (config.nodeEnv === 'production') {
     app.set('trust proxy', 1);
   }
@@ -45,7 +44,7 @@ async function main() {
       origin: config.corsOrigin,
       methods: ['GET', 'POST'],
     },
-    maxHttpBufferSize: 1e5, // 100KB max per socket message
+    maxHttpBufferSize: 1e5,
   });
 
   // Security middleware
@@ -72,16 +71,17 @@ async function main() {
   app.use('/api/reports', reportRoutes);
   app.use('/api/bans', banRoutes);
   app.use('/api/sessions', sessionRoutes);
+  app.use('/api/users', userRoutes);
 
   // Socket.IO
   const matchmaker = setupSocketHandlers(io);
 
-  // Health check (public, minimal info)
+  // Health check
   app.get('/api/health', (_req, res) => {
     res.json({ status: 'ok' });
   });
 
-  // Stats (protected — admin only)
+  // Stats (admin only)
   app.get('/api/stats', authMiddleware, (_req, res) => {
     res.json(matchmaker.getStats());
   });
@@ -90,13 +90,11 @@ async function main() {
   if (config.nodeEnv === 'production') {
     const clientDist = path.resolve(__dirname, '../../client/dist');
     app.use(express.static(clientDist));
-    // SPA fallback — all non-API routes serve index.html
     app.get('*', (_req, res) => {
       res.sendFile(path.join(clientDist, 'index.html'));
     });
   }
 
-  // Graceful shutdown
   process.on('SIGINT', () => {
     console.log('\nSaving database and shutting down...');
     saveDb();

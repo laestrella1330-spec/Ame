@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 import { useSocket } from '../hooks/useSocket';
 import { useMediaStream } from '../hooks/useMediaStream';
 import { useWebRTC } from '../hooks/useWebRTC';
@@ -11,19 +12,28 @@ import ConnectionStatus from '../components/ConnectionStatus';
 import ReportModal from '../components/ReportModal';
 import ChatPanel from '../components/ChatPanel';
 import SettingsPanel from '../components/SettingsPanel';
+import SafetyWarningModal from '../components/SafetyWarningModal';
 
 export default function ChatPage() {
   const navigate = useNavigate();
+  const { user, isLoading } = useAuth();
   const [showReport, setShowReport] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
+  const [consentAccepted, setConsentAccepted] = useState(false);
   const { settings, updateSettings } = useSettings();
 
-  // Check consent
+  // Auth guard: redirect to /login if not authenticated
   useEffect(() => {
-    if (!sessionStorage.getItem('consent_given')) {
-      navigate('/', { replace: true });
+    if (!isLoading) {
+      if (!user) {
+        navigate('/login', { replace: true });
+      } else if (user.activeBan) {
+        navigate('/', { replace: true });
+      } else if (user.hasAcceptedConsent) {
+        setConsentAccepted(true);
+      }
     }
-  }, [navigate]);
+  }, [user, isLoading, navigate]);
 
   const { socket, isConnected } = useSocket();
   const { stream, error, isMuted, isCameraOff, startMedia, stopMedia, toggleMute, toggleCamera } =
@@ -47,6 +57,14 @@ export default function ChatPage() {
     });
   };
 
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-slate-400">Loading…</div>
+      </div>
+    );
+  }
+
   if (error) {
     return (
       <div className="min-h-screen flex items-center justify-center p-4">
@@ -66,10 +84,20 @@ export default function ChatPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
+      {/* Safety Warning Modal — shown before consent is recorded */}
+      {user && !consentAccepted && (
+        <SafetyWarningModal onAccepted={() => setConsentAccepted(true)} />
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 glass">
         <img src="/logo.svg" alt="Ame" className="h-8" />
         <div className="flex items-center gap-3">
+          {user && (
+            <span className="text-xs text-slate-400 hidden sm:block">
+              {user.displayName}
+            </span>
+          )}
           <ConnectionStatus state={connectionState} />
           {isConnected ? (
             <span className="text-xs text-green-400">Server connected</span>

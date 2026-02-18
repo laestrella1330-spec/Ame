@@ -38,9 +38,72 @@ export interface Admin {
   created_at: string;
 }
 
+// ─── User account ──────────────────────────────────────────────────────────────
+export interface User {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  facebook_id: string | null;
+  display_name: string;
+  password_hash: string | null;
+  email_verified: number;
+  phone_verified: number;
+  role: 'user' | 'admin';
+  is_active: number;
+  created_at: string;
+  last_login_at: string | null;
+}
+
+// ─── Progressive user ban ─────────────────────────────────────────────────────
+export interface UserBan {
+  id: number;
+  user_id: string;
+  reason: string | null;
+  banned_at: string;
+  expires_at: string;
+  lifted_at: string | null;
+  lifted_by: string | null;
+  banned_by: string | null;
+  ban_number: number;
+  duration_days: number;
+}
+
+// ─── Monitoring consent ───────────────────────────────────────────────────────
+export interface UserConsent {
+  id: number;
+  user_id: string;
+  consent_type: string;
+  accepted_at: string;
+  ip_address: string | null;
+  user_agent: string | null;
+}
+
+// ─── Phone OTP ────────────────────────────────────────────────────────────────
+export interface OtpCode {
+  id: number;
+  phone: string;
+  code: string;
+  expires_at: string;
+  used: number;
+  created_at: string;
+}
+
+// ─── Audit log ────────────────────────────────────────────────────────────────
+export interface AuditLog {
+  id: number;
+  event_type: string;
+  actor_id: string | null;
+  target_id: string | null;
+  details: string | null;
+  ip_address: string | null;
+  created_at: string;
+}
+
+// ─── Matchmaker internals ─────────────────────────────────────────────────────
 export interface QueueEntry {
   socketId: string;
   ip: string;
+  userId: string;
   joinedAt: Date;
   gender?: string;
   preferredGender?: string;
@@ -51,4 +114,6 @@ export interface ActiveMatch {
   sessionId: string;
   socketA: string;
   socketB: string;
+  userA: string;
+  userB: string;
 }

@@ -15,8 +15,13 @@ export function authMiddleware(req: AuthRequest, res: Response, next: NextFuncti
 
   const token = authHeader.slice(7);
   try {
-    const decoded = jwt.verify(token, config.jwtSecret) as { username: string };
-    req.admin = decoded;
+    // Accept old format { username } and new format { type:'admin', username }
+    const decoded = jwt.verify(token, config.jwtSecret) as { type?: string; username?: string };
+    if (!decoded.username) {
+      res.status(401).json({ error: 'Invalid token' });
+      return;
+    }
+    req.admin = { username: decoded.username };
     next();
   } catch {
     res.status(401).json({ error: 'Invalid token' });
