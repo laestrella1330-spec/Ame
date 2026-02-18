@@ -58,6 +58,7 @@ interface SettingsPanelProps {
   settings: UserSettings;
   onUpdate: (patch: Partial<UserSettings>) => void;
   onClose: () => void;
+  onLogout: () => void;
 }
 
 function GenderBtn({
@@ -86,7 +87,7 @@ function GenderBtn({
   );
 }
 
-export default function SettingsPanel({ settings, onUpdate, onClose }: SettingsPanelProps) {
+export default function SettingsPanel({ settings, onUpdate, onClose, onLogout }: SettingsPanelProps) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="glass rounded-2xl p-6 w-full max-w-md glow-purple relative">
@@ -145,9 +146,17 @@ export default function SettingsPanel({ settings, onUpdate, onClose }: SettingsP
 
         <button
           onClick={onClose}
-          className="w-full py-2 btn-gradient text-white rounded-lg text-sm font-semibold"
+          className="w-full py-2 btn-gradient text-white rounded-lg text-sm font-semibold mb-3"
         >
           Save & Close
+        </button>
+
+        {/* Logout */}
+        <button
+          onClick={onLogout}
+          className="w-full py-2 bg-white/5 hover:bg-red-600/20 text-slate-400 hover:text-red-400 rounded-lg text-sm border border-white/10 hover:border-red-600/30 transition-all"
+        >
+          Sign Out
         </button>
       </div>
     </div>

@@ -26,6 +26,7 @@ import {
 import { logAudit } from '../services/auditService.js';
 import { queryOne, queryAll, execute } from '../db/connection.js';
 import type { UserConsent } from '../types/index.js';
+import { kickUser } from '../signaling/socketHandler.js';
 
 const router = Router();
 
@@ -153,6 +154,9 @@ router.post('/:id/ban', authMiddleware, (req: AuthRequest, res: Response) => {
     banNumber: ban.ban_number,
     durationDays: ban.duration_days,
   }, getIp(req));
+
+  // Immediately disconnect any active sockets belonging to this user
+  kickUser(userId);
 
   res.status(201).json(ban);
 });

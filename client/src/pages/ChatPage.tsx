@@ -16,7 +16,7 @@ import SafetyWarningModal from '../components/SafetyWarningModal';
 
 export default function ChatPage() {
   const navigate = useNavigate();
-  const { user, isLoading } = useAuth();
+  const { user, isLoading, logout } = useAuth();
   const [showReport, setShowReport] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [consentAccepted, setConsentAccepted] = useState(false);
@@ -175,6 +175,7 @@ export default function ChatPage() {
           settings={settings}
           onUpdate={updateSettings}
           onClose={() => setShowSettings(false)}
+          onLogout={() => { logout(); navigate('/login', { replace: true }); }}
         />
       )}
     </div>

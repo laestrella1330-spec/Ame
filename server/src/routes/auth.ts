@@ -174,7 +174,12 @@ router.post('/phone/send-otp', async (req: Request, res: Response) => {
   }
 
   logAudit('phone_otp_sent', null, null, { phone: normalised }, getIp(req));
-  res.json({ message: 'OTP sent', devMode: !twilioAccountSid });
+  // In dev mode (no Twilio), return the code in the response so the UI can display it
+  res.json({
+    message: 'OTP sent',
+    devMode: !twilioAccountSid,
+    ...(twilioAccountSid ? {} : { devCode: code }),
+  });
 });
 
 // ── Phone OTP: verify ─────────────────────────────────────────────────────────

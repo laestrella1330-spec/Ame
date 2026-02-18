@@ -72,7 +72,26 @@ const monitoringSessions = new Map<string, Set<string>>();
 // Maps adminSocketId → Set of sessionIds being monitored
 const adminMonitoring = new Map<string, Set<string>>();
 
+// ─── Active user socket tracking (for forced kick on ban) ─────────────────────
+// Maps userId → Set of socket IDs currently connected
+const userIdToSockets = new Map<string, Set<string>>();
+let ioInstance: Server | null = null;
+
+/** Force-disconnect all sockets belonging to a user (called when user is banned). */
+export function kickUser(userId: string): void {
+  const socketIds = userIdToSockets.get(userId);
+  if (!socketIds || !ioInstance) return;
+  for (const socketId of Array.from(socketIds)) {
+    const socket = ioInstance.sockets.sockets.get(socketId);
+    if (socket) {
+      socket.emit('banned', { reason: 'Your account has been suspended.' });
+      socket.disconnect(true);
+    }
+  }
+}
+
 export function setupSocketHandlers(io: Server): Matchmaker {
+  ioInstance = io;
   const matchmaker = new Matchmaker(io);
 
   // ── Auth middleware ──────────────────────────────────────────────────────────
@@ -128,6 +147,12 @@ export function setupSocketHandlers(io: Server): Matchmaker {
     const s = socket as SocketWithUser;
     const ip = getClientIp(socket);
     console.log(`Socket connected: ${socket.id} user=${s.userId} admin=${s.isAdmin}`);
+
+    // Track user socket for ban enforcement
+    if (!s.isAdmin && s.userId) {
+      if (!userIdToSockets.has(s.userId)) userIdToSockets.set(s.userId, new Set());
+      userIdToSockets.get(s.userId)!.add(socket.id);
+    }
 
     // ── Admin events ───────────────────────────────────────────────────────────
     if (s.isAdmin) {
@@ -263,6 +288,12 @@ export function setupSocketHandlers(io: Server): Matchmaker {
 
     socket.on('disconnect', () => {
       console.log(`Socket disconnected: ${socket.id}`);
+      // Remove from userId tracking
+      const sockets = userIdToSockets.get(s.userId);
+      if (sockets) {
+        sockets.delete(socket.id);
+        if (sockets.size === 0) userIdToSockets.delete(s.userId);
+      }
       matchmaker.handleDisconnect(socket.id);
       socketMessageTimestamps.delete(socket.id);
       decrementIpCount(ip);

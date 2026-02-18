@@ -27,6 +27,7 @@ export default function LoginPage() {
   const [otpCode, setOtpCode] = useState('');
   const [otpSent, setOtpSent] = useState(false);
   const [devOtpNote, setDevOtpNote] = useState(false);
+  const [devOtpCode, setDevOtpCode] = useState('');
 
   // Hash-based error from Facebook redirect
   useEffect(() => {
@@ -126,7 +127,10 @@ export default function LoginPage() {
       const data = await res.json() as Record<string, unknown>;
       if (!res.ok) { setError(String(data.error ?? 'Failed to send OTP')); return; }
       setOtpSent(true);
-      if (data.devMode) setDevOtpNote(true);
+      if (data.devMode) {
+        setDevOtpNote(true);
+        if (data.devCode) setDevOtpCode(String(data.devCode));
+      }
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -324,8 +328,13 @@ export default function LoginPage() {
             </div>
 
             {devOtpNote && (
-              <div className="bg-yellow-600/20 border border-yellow-600/30 text-yellow-400 text-xs p-3 rounded-lg">
-                Dev mode: OTP logged to server console (no Twilio configured)
+              <div className="bg-yellow-600/20 border border-yellow-600/30 text-yellow-400 text-xs p-3 rounded-lg space-y-1">
+                <p className="font-medium">Dev mode — Twilio not configured</p>
+                {devOtpCode ? (
+                  <p>Your code: <span className="font-mono text-base tracking-widest text-yellow-300">{devOtpCode}</span></p>
+                ) : (
+                  <p>Check the server console for the OTP code.</p>
+                )}
               </div>
             )}
 
