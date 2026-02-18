@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
+  <defs>
+    <linearGradient id="logoGrad" x1="0" y1="0" x2="200" y2="60" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="50%" stop-color="#a855f7"/>
+      <stop offset="100%" stop-color="#c084fc"/>
+    </linearGradient>
+    <linearGradient id="iconBg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#7c3aed"/>
+      <stop offset="100%" stop-color="#a855f7"/>
+    </linearGradient>
+    <linearGradient id="iconShine" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
+      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <!-- Icon -->
+  <rect x="2" y="6" width="48" height="48" rx="14" fill="url(#iconBg)"/>
+  <rect x="2" y="6" width="48" height="48" rx="14" fill="url(#iconShine)"/>
+  <text x="26" y="40" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="bold" fill="white" text-anchor="middle">A</text>
+  <!-- Text -->
+  <text x="62" y="43" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="bold" fill="url(#logoGrad)">me</text>
+</svg>

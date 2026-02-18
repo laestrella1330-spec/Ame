@@ -56,7 +56,7 @@ export default function ChatPage() {
     <div className="min-h-screen flex flex-col">
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 glass">
-        <h1 className="text-gradient font-bold text-lg">Ame</h1>
+        <img src="/logo.svg" alt="Ame" className="h-8" />
         <div className="flex items-center gap-4">
           <ConnectionStatus state={connectionState} />
           {isConnected ? (

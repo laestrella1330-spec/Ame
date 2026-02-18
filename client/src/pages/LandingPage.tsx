@@ -18,7 +18,7 @@ export default function LandingPage() {
     <div className="min-h-screen flex items-center justify-center p-4">
       <div className="max-w-lg w-full">
         <div className="text-center mb-8 animate-float">
-          <h1 className="text-5xl font-bold text-gradient mb-2">Ame</h1>
+          <img src="/logo.svg" alt="Ame" className="h-14 mx-auto mb-3" />
           <p className="text-slate-400">Meet new people through random video conversations</p>
         </div>
 
