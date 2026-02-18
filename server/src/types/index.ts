@@ -42,6 +42,9 @@ export interface QueueEntry {
   socketId: string;
   ip: string;
   joinedAt: Date;
+  gender?: string;
+  preferredGender?: string;
+  country?: string;
 }
 
 export interface ActiveMatch {

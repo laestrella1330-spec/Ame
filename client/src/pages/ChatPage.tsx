@@ -4,15 +4,19 @@ import { useSocket } from '../hooks/useSocket';
 import { useMediaStream } from '../hooks/useMediaStream';
 import { useWebRTC } from '../hooks/useWebRTC';
 import { useChat } from '../hooks/useChat';
+import { useSettings } from '../hooks/useSettings';
 import VideoPlayer from '../components/VideoPlayer';
 import ChatControls from '../components/ChatControls';
 import ConnectionStatus from '../components/ConnectionStatus';
 import ReportModal from '../components/ReportModal';
 import ChatPanel from '../components/ChatPanel';
+import SettingsPanel from '../components/SettingsPanel';
 
 export default function ChatPage() {
   const navigate = useNavigate();
   const [showReport, setShowReport] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const { settings, updateSettings } = useSettings();
 
   // Check consent
   useEffect(() => {
@@ -34,6 +38,14 @@ export default function ChatPage() {
       stopMedia();
     };
   }, [startMedia, stopMedia]);
+
+  const handleJoinQueue = () => {
+    joinQueue({
+      gender: settings.gender || undefined,
+      preferredGender: settings.preferredGender !== 'any' ? settings.preferredGender : undefined,
+      country: settings.country || undefined,
+    });
+  };
 
   if (error) {
     return (
@@ -57,13 +69,21 @@ export default function ChatPage() {
       {/* Header */}
       <div className="flex items-center justify-between px-4 py-3 glass">
         <img src="/logo.svg" alt="Ame" className="h-8" />
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <ConnectionStatus state={connectionState} />
           {isConnected ? (
             <span className="text-xs text-green-400">Server connected</span>
           ) : (
             <span className="text-xs text-red-400">Server disconnected</span>
           )}
+          <button
+            onClick={() => setShowSettings(true)}
+            className="px-3 py-1.5 rounded-lg text-sm bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 transition-colors flex items-center gap-1.5"
+            title="Preferences"
+          >
+            <span>⚙️</span>
+            <span className="hidden sm:inline">Settings</span>
+          </button>
         </div>
       </div>
 
@@ -112,13 +132,22 @@ export default function ChatPage() {
           onSkip={skip}
           onEndChat={endChat}
           onReport={() => setShowReport(true)}
-          onJoinQueue={joinQueue}
+          onJoinQueue={handleJoinQueue}
         />
       </div>
 
       {/* Report Modal */}
       {showReport && (
         <ReportModal socket={socket} onClose={() => setShowReport(false)} />
+      )}
+
+      {/* Settings Panel */}
+      {showSettings && (
+        <SettingsPanel
+          settings={settings}
+          onUpdate={updateSettings}
+          onClose={() => setShowSettings(false)}
+        />
       )}
     </div>
   );

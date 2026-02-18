@@ -1,6 +1,6 @@
 import { Server, Socket } from 'socket.io';
 import { z } from 'zod';
-import { Matchmaker } from './matchmaker.js';
+import { Matchmaker, type JoinPreferences } from './matchmaker.js';
 
 const reportSchema = z.object({
   reason: z.enum(['inappropriate', 'harassment', 'spam', 'underage', 'other']),
@@ -10,6 +10,12 @@ const reportSchema = z.object({
 const chatMessageSchema = z.object({
   text: z.string().min(1).max(500),
 });
+
+const joinQueueSchema = z.object({
+  gender: z.enum(['male', 'female', 'other', '']).optional(),
+  preferredGender: z.enum(['male', 'female', 'any']).optional(),
+  country: z.string().max(2).optional(),
+}).optional();
 
 // Strip HTML tags to prevent XSS
 function sanitizeText(text: string): string {
@@ -62,8 +68,10 @@ export function setupSocketHandlers(io: Server): Matchmaker {
     const ip = getClientIp(socket);
     console.log(`User connected: ${socket.id} (${ip})`);
 
-    socket.on('join-queue', () => {
-      matchmaker.addToQueue(socket);
+    socket.on('join-queue', (data?: unknown) => {
+      const parsed = joinQueueSchema.safeParse(data);
+      const prefs: JoinPreferences = parsed.success && parsed.data ? parsed.data : {};
+      matchmaker.addToQueue(socket, prefs);
     });
 
     socket.on('leave-queue', () => {

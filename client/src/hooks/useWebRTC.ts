@@ -15,6 +15,12 @@ interface MatchData {
 
 export type ConnectionState = 'idle' | 'searching' | 'connecting' | 'connected' | 'disconnected';
 
+export interface JoinPrefs {
+  gender?: string;
+  preferredGender?: string;
+  country?: string;
+}
+
 export function useWebRTC(socket: Socket | null, localStream: MediaStream | null) {
   const pcRef = useRef<RTCPeerConnection | null>(null);
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
@@ -65,10 +71,10 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
     [socket, localStream, cleanup]
   );
 
-  const joinQueue = useCallback(() => {
+  const joinQueue = useCallback((prefs?: JoinPrefs) => {
     if (!socket) return;
     setConnectionState('searching');
-    socket.emit('join-queue');
+    socket.emit('join-queue', prefs || {});
   }, [socket]);
 
   const leaveQueue = useCallback(() => {

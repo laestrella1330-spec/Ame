@@ -38,8 +38,17 @@ body {
   .glow-purple {
     box-shadow: 0 0 15px rgba(139, 92, 246, 0.3), 0 0 30px rgba(139, 92, 246, 0.1);
   }
+
+  /* Chat panel with darker glass + purple border for orb effect */
+  .chat-panel-bg {
+    background: rgba(15, 10, 40, 0.7);
+    backdrop-filter: blur(16px);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    box-shadow: 0 0 20px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255,255,255,0.05);
+  }
 }
 
+/* ─── Float animation ─── */
 @keyframes float {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-6px); }
@@ -47,4 +56,60 @@ body {
 
 .animate-float {
   animation: float 3s ease-in-out infinite;
+}
+
+/* ─── Chat panel background orbs ─── */
+@keyframes orbDrift1 {
+  0%   { transform: translate(0, 0) scale(1); }
+  33%  { transform: translate(15px, -20px) scale(1.05); }
+  66%  { transform: translate(-10px, 10px) scale(0.95); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes orbDrift2 {
+  0%   { transform: translate(0, 0) scale(1); }
+  40%  { transform: translate(-20px, 15px) scale(1.08); }
+  80%  { transform: translate(12px, -8px) scale(0.92); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+@keyframes orbDrift3 {
+  0%   { transform: translate(0, 0) scale(1); }
+  50%  { transform: translate(10px, 20px) scale(1.06); }
+  100% { transform: translate(0, 0) scale(1); }
+}
+
+.orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  pointer-events: none;
+  z-index: 0;
+}
+
+.orb-1 {
+  width: 160px;
+  height: 160px;
+  top: -30px;
+  right: -20px;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.35) 0%, transparent 70%);
+  animation: orbDrift1 9s ease-in-out infinite;
+}
+
+.orb-2 {
+  width: 120px;
+  height: 120px;
+  bottom: 40px;
+  left: -15px;
+  background: radial-gradient(circle, rgba(168, 85, 247, 0.3) 0%, transparent 70%);
+  animation: orbDrift2 12s ease-in-out infinite;
+}
+
+.orb-3 {
+  width: 80px;
+  height: 80px;
+  top: 45%;
+  left: 35%;
+  background: radial-gradient(circle, rgba(192, 132, 252, 0.2) 0%, transparent 70%);
+  animation: orbDrift3 15s ease-in-out infinite;
 }

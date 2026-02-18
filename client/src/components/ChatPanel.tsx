@@ -7,19 +7,43 @@ interface ChatPanelProps {
   disabled: boolean;
 }
 
+const EMOJI_LIST = [
+  '😀','😂','😍','🥰','😎','🤔','😴','🥺','😭','😡',
+  '🤩','🙄','😅','😬','🤯','🫠','🤣','😏','🤫','🤭',
+  '😮','😱','🥹','😈','🤡','🥳','🫡','🙏','💪','🤦',
+  '🤷','👋','👍','👎','🤝','👀','💀','🫶','💋','❤️',
+  '🔥','✨','🎉','💯','💫','🌟','⚡','🎶','🎮','🍕',
+  '🍔','🍜','☕','🍺','🌮','🎂','🍦','🍫','🤙','✌️',
+];
+
 export default function ChatPanel({ messages, onSend, disabled }: ChatPanelProps) {
   const [input, setInput] = useState('');
+  const [showEmojis, setShowEmojis] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const emojiRef = useRef<HTMLDivElement>(null);
 
   // Auto-scroll to bottom on new messages
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
 
+  // Close emoji picker when clicking outside
+  useEffect(() => {
+    if (!showEmojis) return;
+    const handler = (e: MouseEvent) => {
+      if (emojiRef.current && !emojiRef.current.contains(e.target as Node)) {
+        setShowEmojis(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showEmojis]);
+
   const handleSend = () => {
     if (!input.trim() || disabled) return;
     onSend(input);
     setInput('');
+    setShowEmojis(false);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -29,18 +53,27 @@ export default function ChatPanel({ messages, onSend, disabled }: ChatPanelProps
     }
   };
 
+  const insertEmoji = (emoji: string) => {
+    setInput((prev) => (prev + emoji).slice(0, 500));
+  };
+
   return (
-    <div className="glass rounded-2xl flex flex-col h-full">
+    <div className="chat-panel-bg rounded-2xl flex flex-col h-full overflow-hidden relative">
+      {/* Animated background orbs */}
+      <div className="orb orb-1" />
+      <div className="orb orb-2" />
+      <div className="orb orb-3" />
+
       {/* Header */}
-      <div className="px-4 py-3 border-b border-white/10">
+      <div className="relative z-10 px-4 py-3 border-b border-white/10">
         <h2 className="text-sm font-semibold text-white">Chat</h2>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
+      <div className="relative z-10 flex-1 overflow-y-auto p-3 space-y-2 min-h-0">
         {messages.length === 0 && (
           <div className="text-center text-slate-500 text-xs mt-8">
-            {disabled ? 'Connect to a partner to start chatting' : 'Say hello!'}
+            {disabled ? 'Connect to a partner to start chatting' : 'Say hello! 👋'}
           </div>
         )}
         {messages.map((msg) => (
@@ -51,7 +84,7 @@ export default function ChatPanel({ messages, onSend, disabled }: ChatPanelProps
             <div
               className={`max-w-[85%] px-3 py-2 rounded-xl text-sm break-words ${
                 msg.isSelf
-                  ? 'bg-violet-600/40 text-white rounded-br-sm'
+                  ? 'bg-violet-600/50 text-white rounded-br-sm shadow-[0_0_10px_rgba(139,92,246,0.3)]'
                   : 'bg-white/10 text-slate-200 rounded-bl-sm'
               }`}
             >
@@ -62,9 +95,37 @@ export default function ChatPanel({ messages, onSend, disabled }: ChatPanelProps
         <div ref={messagesEndRef} />
       </div>
 
+      {/* Emoji picker */}
+      {showEmojis && (
+        <div
+          ref={emojiRef}
+          className="relative z-20 mx-3 mb-1 p-2 bg-slate-900/95 border border-white/10 rounded-xl grid grid-cols-10 gap-0.5"
+        >
+          {EMOJI_LIST.map((emoji) => (
+            <button
+              key={emoji}
+              onClick={() => insertEmoji(emoji)}
+              className="text-lg hover:bg-white/10 rounded p-0.5 transition-colors leading-tight"
+            >
+              {emoji}
+            </button>
+          ))}
+        </div>
+      )}
+
       {/* Input */}
-      <div className="p-3 border-t border-white/10">
+      <div className="relative z-10 p-3 border-t border-white/10">
         <div className="flex gap-2">
+          <button
+            onClick={() => setShowEmojis((v) => !v)}
+            disabled={disabled}
+            className={`px-2 py-2 rounded-lg text-lg leading-none transition-all disabled:opacity-40 disabled:cursor-not-allowed ${
+              showEmojis ? 'bg-violet-600/40' : 'bg-white/5 hover:bg-white/10'
+            }`}
+            title="Emoji"
+          >
+            😊
+          </button>
           <input
             type="text"
             value={input}
