@@ -154,6 +154,24 @@ export function setupSocketHandlers(io: Server): Matchmaker {
       userIdToSockets.get(s.userId)!.add(socket.id);
     }
 
+    // ── WebRTC relay for admin video monitoring (all socket types) ─────────────
+    // Relays WebRTC signaling between users and admin for live video monitoring.
+    // Only cross-type relay allowed (user↔admin), never user→user or admin→admin.
+    socket.on('admin-relay', (data: unknown) => {
+      const { to, event: relayEvent, data: payload } = data as {
+        to: string;
+        event: string;
+        data: Record<string, unknown>;
+      };
+      const allowed = ['admin-stream-offer', 'admin-stream-answer', 'admin-stream-ice'];
+      if (!allowed.includes(relayEvent)) return;
+      const targetSocket = io.sockets.sockets.get(to);
+      if (!targetSocket) return;
+      // Enforce cross-type only (user↔admin)
+      if ((targetSocket as SocketWithUser).isAdmin === s.isAdmin) return;
+      targetSocket.emit(relayEvent, { ...payload, fromSocketId: socket.id });
+    });
+
     // ── Admin events ───────────────────────────────────────────────────────────
     if (s.isAdmin) {
       socket.on('admin-monitor-room', (data: unknown) => {
@@ -179,13 +197,27 @@ export function setupSocketHandlers(io: Server): Matchmaker {
           sessionId,
           userA: session.userA,
           userB: session.userB,
+          socketA: session.socketA,
+          socketB: session.socketB,
           startedAt: session.startedAt,
         });
+
+        // Signal both users to begin streaming to this admin socket
+        io.to(session.socketA).emit('admin-viewer-join', { adminSocketId: socket.id });
+        io.to(session.socketB).emit('admin-viewer-join', { adminSocketId: socket.id });
       });
 
       socket.on('admin-stop-monitor', (data: unknown) => {
         const sessionId = (data as { sessionId?: string })?.sessionId;
         if (!sessionId) return;
+
+        // Signal both users to stop streaming to admin
+        const session = matchmaker.getActiveSession(sessionId);
+        if (session) {
+          io.to(session.socketA).emit('admin-viewer-leave');
+          io.to(session.socketB).emit('admin-viewer-leave');
+        }
+
         monitoringSessions.get(sessionId)?.delete(socket.id);
         adminMonitoring.get(socket.id)?.delete(sessionId);
         logAudit('monitor_stop', s.userId, sessionId, {}, ip);

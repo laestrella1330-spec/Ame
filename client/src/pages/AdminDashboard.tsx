@@ -92,9 +92,16 @@ export default function AdminDashboard() {
   const adminSocketRef = useRef<Socket | null>(null);
   const [monitoredSession, setMonitoredSession] = useState<string | null>(null);
   const [monitorMessages, setMonitorMessages] = useState<MonitorMessage[]>([]);
-  const [monitorInfo, setMonitorInfo] = useState<{ userA: string; userB: string; startedAt: string } | null>(null);
+  const [monitorInfo, setMonitorInfo] = useState<{ userA: string; userB: string; startedAt: string; socketA: string; socketB: string } | null>(null);
   const monitorPanelRef = useRef<HTMLDivElement>(null);
   const monitorMsgsEndRef = useRef<HTMLDivElement>(null);
+  // Video monitoring — one RTCPeerConnection per user socket
+  const adminPcsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+  const socketUserMapRef = useRef<{ socketA: string; socketB: string } | null>(null);
+  const [streamA, setStreamA] = useState<MediaStream | null>(null);
+  const [streamB, setStreamB] = useState<MediaStream | null>(null);
+  const videoARef = useRef<HTMLVideoElement>(null);
+  const videoBRef = useRef<HTMLVideoElement>(null);
 
   const fetchData = useCallback(async () => {
     try {
@@ -149,6 +156,14 @@ export default function AdminDashboard() {
     monitorMsgsEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [monitorMessages]);
 
+  // Bind video streams to video elements (srcObject can't be set via JSX)
+  useEffect(() => {
+    if (videoARef.current) videoARef.current.srcObject = streamA;
+  }, [streamA]);
+  useEffect(() => {
+    if (videoBRef.current) videoBRef.current.srcObject = streamB;
+  }, [streamB]);
+
   // Admin Socket for monitoring
   useEffect(() => {
     const token = localStorage.getItem('admin_token') ?? '';
@@ -156,10 +171,13 @@ export default function AdminDashboard() {
     adminSocketRef.current = sock;
     sock.connect();
 
-    sock.on('monitor-started', (data: { sessionId: string; userA: string; userB: string; startedAt: string }) => {
+    sock.on('monitor-started', (data: { sessionId: string; userA: string; userB: string; startedAt: string; socketA: string; socketB: string }) => {
       setMonitoredSession(data.sessionId);
-      setMonitorInfo({ userA: data.userA, userB: data.userB, startedAt: data.startedAt });
+      setMonitorInfo({ userA: data.userA, userB: data.userB, startedAt: data.startedAt, socketA: data.socketA, socketB: data.socketB });
+      socketUserMapRef.current = { socketA: data.socketA, socketB: data.socketB };
       setMonitorMessages([]);
+      setStreamA(null);
+      setStreamB(null);
     });
 
     sock.on('monitor-chat-message', (msg: MonitorMessage) => {
@@ -169,6 +187,51 @@ export default function AdminDashboard() {
     sock.on('monitor-ended', () => {
       setMonitoredSession(null);
       setMonitorInfo(null);
+    });
+
+    // Receive video offer from a user and answer it
+    sock.on('admin-stream-offer', async (data: { sdp: RTCSessionDescriptionInit; fromSocketId: string }) => {
+      try {
+        const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+
+        pc.onicecandidate = (event) => {
+          if (event.candidate) {
+            sock.emit('admin-relay', {
+              to: data.fromSocketId,
+              event: 'admin-stream-ice',
+              data: { candidate: event.candidate },
+            });
+          }
+        };
+
+        pc.ontrack = (event) => {
+          const mapping = socketUserMapRef.current;
+          if (mapping?.socketA === data.fromSocketId) {
+            setStreamA(event.streams[0]);
+          } else {
+            setStreamB(event.streams[0]);
+          }
+        };
+
+        adminPcsRef.current.set(data.fromSocketId, pc);
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        sock.emit('admin-relay', {
+          to: data.fromSocketId,
+          event: 'admin-stream-answer',
+          data: { sdp: pc.localDescription },
+        });
+      } catch (err) {
+        console.error('Admin stream offer error:', err);
+      }
+    });
+
+    // Receive ICE candidates from users
+    sock.on('admin-stream-ice', (data: { candidate: RTCIceCandidateInit; fromSocketId: string }) => {
+      const pc = adminPcsRef.current.get(data.fromSocketId);
+      if (!pc) return;
+      pc.addIceCandidate(new RTCIceCandidate(data.candidate)).catch(() => {});
     });
 
     return () => {
@@ -183,6 +246,12 @@ export default function AdminDashboard() {
   const handleStopMonitor = () => {
     if (monitoredSession) {
       adminSocketRef.current?.emit('admin-stop-monitor', { sessionId: monitoredSession });
+      // Close all video peer connections
+      for (const [, pc] of adminPcsRef.current) pc.close();
+      adminPcsRef.current.clear();
+      socketUserMapRef.current = null;
+      setStreamA(null);
+      setStreamB(null);
       setMonitoredSession(null);
       setMonitorInfo(null);
       setMonitorMessages([]);
@@ -578,6 +647,36 @@ export default function AdminDashboard() {
                   </button>
                 </div>
 
+                {/* Live Video Feeds */}
+                <div className="grid grid-cols-2 gap-3 p-4 bg-black/40 border-b border-white/5">
+                  <div>
+                    <div className="text-xs text-blue-400 font-medium mb-1.5">User A — Live Video</div>
+                    <div className="relative bg-black rounded-xl overflow-hidden aspect-video border border-blue-500/20">
+                      {streamA ? (
+                        <video ref={videoARef} autoPlay playsInline className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-slate-600">
+                          <span className="text-2xl opacity-30">📷</span>
+                          <span className="text-xs">Waiting for video…</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div>
+                    <div className="text-xs text-emerald-400 font-medium mb-1.5">User B — Live Video</div>
+                    <div className="relative bg-black rounded-xl overflow-hidden aspect-video border border-emerald-500/20">
+                      {streamB ? (
+                        <video ref={videoBRef} autoPlay playsInline className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-slate-600">
+                          <span className="text-2xl opacity-30">📷</span>
+                          <span className="text-xs">Waiting for video…</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+
                 {/* Legend */}
                 <div className="flex gap-4 px-5 py-2 bg-black/10 border-b border-white/5 text-xs">
                   <span className="text-blue-400 font-medium">■ User A</span>
@@ -586,16 +685,13 @@ export default function AdminDashboard() {
                 </div>
 
                 {/* Message feed */}
-                <div className="h-[480px] overflow-y-auto p-5 space-y-3 bg-black/20">
+                <div className="h-72 overflow-y-auto p-5 space-y-3 bg-black/20">
                   {monitorMessages.length === 0 ? (
                     <div className="h-full flex flex-col items-center justify-center text-slate-600 text-sm gap-3">
                       <span className="text-4xl opacity-40">💬</span>
                       <p className="font-medium">Monitoring active</p>
                       <p className="text-xs text-slate-700">
                         Text messages sent by users will appear here in real-time.
-                      </p>
-                      <p className="text-xs text-slate-700">
-                        Video and audio are peer-to-peer and not accessible.
                       </p>
                     </div>
                   ) : (
