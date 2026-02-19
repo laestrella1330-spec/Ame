@@ -157,11 +157,18 @@ export default function AdminDashboard() {
   }, [monitorMessages]);
 
   // Bind video streams to video elements (srcObject can't be set via JSX)
+  // Call play() explicitly to bypass browser autoplay policies.
   useEffect(() => {
-    if (videoARef.current) videoARef.current.srcObject = streamA;
+    if (videoARef.current) {
+      videoARef.current.srcObject = streamA;
+      if (streamA) videoARef.current.play().catch(() => {});
+    }
   }, [streamA]);
   useEffect(() => {
-    if (videoBRef.current) videoBRef.current.srcObject = streamB;
+    if (videoBRef.current) {
+      videoBRef.current.srcObject = streamB;
+      if (streamB) videoBRef.current.play().catch(() => {});
+    }
   }, [streamB]);
 
   // Admin Socket for monitoring
@@ -205,11 +212,13 @@ export default function AdminDashboard() {
         };
 
         pc.ontrack = (event) => {
+          // event.streams[0] may be undefined on some browsers — fall back to wrapping the track
+          const stream = (event.streams && event.streams[0]) || new MediaStream([event.track]);
           const mapping = socketUserMapRef.current;
           if (mapping?.socketA === data.fromSocketId) {
-            setStreamA(event.streams[0]);
+            setStreamA(stream);
           } else {
-            setStreamB(event.streams[0]);
+            setStreamB(stream);
           }
         };
 
@@ -649,28 +658,44 @@ export default function AdminDashboard() {
 
                 {/* Live Video Feeds */}
                 <div className="grid grid-cols-2 gap-3 p-4 bg-black/40 border-b border-white/5">
+                  {/* User A video — always in DOM so ref + srcObject never loses the element */}
                   <div>
-                    <div className="text-xs text-blue-400 font-medium mb-1.5">User A — Live Video</div>
-                    <div className="relative bg-black rounded-xl overflow-hidden aspect-video border border-blue-500/20">
-                      {streamA ? (
-                        <video ref={videoARef} autoPlay playsInline className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-slate-600">
-                          <span className="text-2xl opacity-30">📷</span>
-                          <span className="text-xs">Waiting for video…</span>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-xs text-blue-400 font-medium">User A — Live Video</span>
+                      {streamA && <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
+                    </div>
+                    <div className="relative bg-slate-800/60 rounded-xl overflow-hidden aspect-video border border-blue-500/30">
+                      <video
+                        ref={videoARef}
+                        autoPlay
+                        playsInline
+                        className={`w-full h-full object-cover ${streamA ? '' : 'hidden'}`}
+                      />
+                      {!streamA && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400">
+                          <span className="text-3xl">📷</span>
+                          <span className="text-xs font-medium">Connecting…</span>
                         </div>
                       )}
                     </div>
                   </div>
+                  {/* User B video */}
                   <div>
-                    <div className="text-xs text-emerald-400 font-medium mb-1.5">User B — Live Video</div>
-                    <div className="relative bg-black rounded-xl overflow-hidden aspect-video border border-emerald-500/20">
-                      {streamB ? (
-                        <video ref={videoBRef} autoPlay playsInline className="w-full h-full object-cover" />
-                      ) : (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-1 text-slate-600">
-                          <span className="text-2xl opacity-30">📷</span>
-                          <span className="text-xs">Waiting for video…</span>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-xs text-emerald-400 font-medium">User B — Live Video</span>
+                      {streamB && <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
+                    </div>
+                    <div className="relative bg-slate-800/60 rounded-xl overflow-hidden aspect-video border border-emerald-500/30">
+                      <video
+                        ref={videoBRef}
+                        autoPlay
+                        playsInline
+                        className={`w-full h-full object-cover ${streamB ? '' : 'hidden'}`}
+                      />
+                      {!streamB && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400">
+                          <span className="text-3xl">📷</span>
+                          <span className="text-xs font-medium">Connecting…</span>
                         </div>
                       )}
                     </div>
