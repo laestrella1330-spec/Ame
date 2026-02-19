@@ -677,12 +677,14 @@ export default function AdminDashboard() {
                       <span className="text-xs text-blue-400 font-medium">User A — Live Video</span>
                       {streamA && <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
                     </div>
-                    <div className="relative bg-slate-800/60 rounded-xl overflow-hidden aspect-video border border-blue-500/30">
+                    {/* padding-bottom trick for reliable 16:9 ratio (no aspect-ratio CSS needed) */}
+                    <div className="relative w-full rounded-xl overflow-hidden border border-blue-500/30 bg-slate-800/60" style={{ paddingBottom: '56.25%' }}>
                       <video
                         ref={videoARef}
                         autoPlay
                         playsInline
-                        className={`w-full h-full object-cover ${streamA ? '' : 'hidden'}`}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        style={{ display: streamA ? 'block' : 'none' }}
                       />
                       {!streamA && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400">
@@ -698,12 +700,13 @@ export default function AdminDashboard() {
                       <span className="text-xs text-emerald-400 font-medium">User B — Live Video</span>
                       {streamB && <span className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />}
                     </div>
-                    <div className="relative bg-slate-800/60 rounded-xl overflow-hidden aspect-video border border-emerald-500/30">
+                    <div className="relative w-full rounded-xl overflow-hidden border border-emerald-500/30 bg-slate-800/60" style={{ paddingBottom: '56.25%' }}>
                       <video
                         ref={videoBRef}
                         autoPlay
                         playsInline
-                        className={`w-full h-full object-cover ${streamB ? '' : 'hidden'}`}
+                        className="absolute inset-0 w-full h-full object-cover"
+                        style={{ display: streamB ? 'block' : 'none' }}
                       />
                       {!streamB && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-slate-400">
