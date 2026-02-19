@@ -16,6 +16,8 @@ export interface JoinPreferences {
   // Phase 2 soft preferences
   energyLevel?: 'chill' | 'normal' | 'hype';
   intent?: 'talk' | 'play' | 'flirt' | 'learn';
+  // Common interests
+  interests?: string[];
 }
 
 export class Matchmaker {
@@ -60,6 +62,7 @@ export class Matchmaker {
       country: prefs?.country,
       energyLevel: prefs?.energyLevel,
       intent: prefs?.intent,
+      interests: prefs?.interests,
     });
 
     logAudit('queue_join', userId, null, { ip });
@@ -94,6 +97,12 @@ export class Matchmaker {
         { energyLevel: a.energyLevel, intent: a.intent },
         { energyLevel: b.energyLevel, intent: b.intent },
       );
+    }
+    // Common interests bonus (+1 per shared interest, max +5)
+    if (a.interests?.length && b.interests?.length) {
+      const bSet = new Set(b.interests.map((i) => i.toLowerCase()));
+      const shared = a.interests.filter((i) => bSet.has(i.toLowerCase()));
+      score += Math.min(shared.length, 5);
     }
     return score;
   }
@@ -149,15 +158,24 @@ export class Matchmaker {
     this.socketToSession.set(entryA.socketId, sessionId);
     this.socketToSession.set(entryB.socketId, sessionId);
 
+    // Compute common interests
+    const commonInterests: string[] = [];
+    if (entryA.interests?.length && entryB.interests?.length) {
+      const bSet = new Set(entryB.interests.map((i) => i.toLowerCase()));
+      entryA.interests.forEach((i) => { if (bSet.has(i.toLowerCase())) commonInterests.push(i.toLowerCase()); });
+    }
+
     this.io.to(entryA.socketId).emit('matched', {
       sessionId, isInitiator: true, iceServers: ICE_SERVERS,
       partnerCountry: entryB.country || null,
       partnerGender: entryB.gender || null,
+      commonInterests,
     });
     this.io.to(entryB.socketId).emit('matched', {
       sessionId, isInitiator: false, iceServers: ICE_SERVERS,
       partnerCountry: entryA.country || null,
       partnerGender: entryA.gender || null,
+      commonInterests,
     });
 
     // Phase 1: AI warm-up — fire async, do not block match

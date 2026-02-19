@@ -2,12 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Dark theme (default) ─── */
+:root {
+  --bg-page-from: #0f172a;
+  --bg-page-mid: #1e1044;
+  --bg-page-to: #0f172a;
+  --text-base: #e2e8f0;
+  --glass-bg: rgba(255, 255, 255, 0.05);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --chat-panel-bg: rgba(15, 10, 40, 0.7);
+  --chat-panel-border: rgba(139, 92, 246, 0.2);
+  --input-bg: rgba(255, 255, 255, 0.05);
+  --input-border: rgba(255, 255, 255, 0.1);
+  --text-muted: #94a3b8;
+  --text-faint: #64748b;
+  --card-bg: rgba(255, 255, 255, 0.05);
+}
+
+/* ─── Light theme ─── */
+html.light {
+  --bg-page-from: #f0f4ff;
+  --bg-page-mid: #e9d5ff;
+  --bg-page-to: #f0f4ff;
+  --text-base: #1e1b4b;
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(139, 92, 246, 0.2);
+  --chat-panel-bg: rgba(240, 235, 255, 0.85);
+  --chat-panel-border: rgba(139, 92, 246, 0.3);
+  --input-bg: rgba(255, 255, 255, 0.8);
+  --input-border: rgba(139, 92, 246, 0.25);
+  --text-muted: #4b5563;
+  --text-faint: #9ca3af;
+  --card-bg: rgba(255, 255, 255, 0.8);
+}
+
 body {
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  background: linear-gradient(135deg, #0f172a 0%, #1e1044 50%, #0f172a 100%);
+  background: linear-gradient(135deg, var(--bg-page-from) 0%, var(--bg-page-mid) 50%, var(--bg-page-to) 100%);
   background-attachment: fixed;
-  color: #e2e8f0;
+  color: var(--text-base);
   min-height: 100vh;
 }
 
@@ -30,9 +64,9 @@ body {
   }
 
   .glass {
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--glass-bg);
     backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.1);
+    border: 1px solid var(--glass-border);
   }
 
   .glow-purple {
@@ -41,9 +75,9 @@ body {
 
   /* Chat panel with darker glass + purple border for orb effect */
   .chat-panel-bg {
-    background: rgba(15, 10, 40, 0.7);
+    background: var(--chat-panel-bg);
     backdrop-filter: blur(16px);
-    border: 1px solid rgba(139, 92, 246, 0.2);
+    border: 1px solid var(--chat-panel-border);
     box-shadow: 0 0 20px rgba(139, 92, 246, 0.15), inset 0 1px 0 rgba(255,255,255,0.05);
   }
 }

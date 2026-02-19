@@ -111,6 +111,8 @@ export interface QueueEntry {
   // Phase 2: smart match soft preferences
   energyLevel?: 'chill' | 'normal' | 'hype';
   intent?: 'talk' | 'play' | 'flirt' | 'learn';
+  // Common interests
+  interests?: string[];
 }
 
 export interface ActiveMatch {

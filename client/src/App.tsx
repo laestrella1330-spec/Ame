@@ -1,6 +1,7 @@
 import { Routes, Route } from 'react-router-dom';
 import { AuthProvider } from './context/AuthContext';
 import { FeaturesProvider } from './context/FeaturesContext';
+import { ThemeProvider } from './context/ThemeContext';
 import LandingPage from './pages/LandingPage';
 import LoginPage from './pages/LoginPage';
 import ChatPage from './pages/ChatPage';
@@ -13,6 +14,7 @@ import AdminRoute from './components/AdminRoute';
 export default function App() {
   return (
     <AuthProvider>
+      <ThemeProvider>
       <FeaturesProvider>
         <Routes>
           <Route path="/" element={<LandingPage />} />
@@ -31,6 +33,7 @@ export default function App() {
           />
         </Routes>
       </FeaturesProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
 }

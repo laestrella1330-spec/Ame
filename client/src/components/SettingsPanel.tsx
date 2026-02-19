@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { UserSettings, Gender, PreferredGender, EnergyLevel, Intent } from '../hooks/useSettings';
 import { useFeatures } from '../context/FeaturesContext';
 
@@ -124,6 +125,18 @@ function Toggle({
 
 export default function SettingsPanel({ settings, onUpdate, onClose, onLogout }: SettingsPanelProps) {
   const features = useFeatures();
+  const [interestInput, setInterestInput] = useState('');
+
+  const addInterest = () => {
+    const tag = interestInput.trim().toLowerCase().slice(0, 30);
+    if (!tag || settings.interests.includes(tag) || settings.interests.length >= 10) return;
+    onUpdate({ interests: [...settings.interests, tag] });
+    setInterestInput('');
+  };
+
+  const removeInterest = (tag: string) => {
+    onUpdate({ interests: settings.interests.filter((i) => i !== tag) });
+  };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
@@ -137,7 +150,18 @@ export default function SettingsPanel({ settings, onUpdate, onClose, onLogout }:
           ✕
         </button>
 
-        <h2 className="text-white font-semibold text-lg mb-5">Preferences</h2>
+        {/* Theme toggle */}
+        <div className="flex items-center justify-between mb-5">
+          <h2 className="text-white font-semibold text-lg">Preferences</h2>
+          <button
+            onClick={() => onUpdate({ theme: settings.theme === 'dark' ? 'light' : 'dark' })}
+            className="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-slate-300 border border-white/10 text-sm flex items-center gap-1.5 transition-colors"
+            title="Toggle theme"
+          >
+            {settings.theme === 'dark' ? '☀️' : '🌙'}
+            <span>{settings.theme === 'dark' ? 'Light' : 'Dark'}</span>
+          </button>
+        </div>
 
         {/* My Gender */}
         <div className="mb-5">
@@ -223,6 +247,63 @@ export default function SettingsPanel({ settings, onUpdate, onClose, onLogout }:
             />
           </div>
         )}
+
+        {/* Interests */}
+        <div className="border-t border-white/10 pt-5 mb-5">
+          <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">Interests</p>
+          <p className="text-slate-500 text-xs mb-3">Shown when you match with someone who shares them</p>
+          <div className="flex gap-2 mb-2">
+            <input
+              type="text"
+              value={interestInput}
+              onChange={(e) => setInterestInput(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addInterest(); } }}
+              placeholder="e.g. music, gaming…"
+              maxLength={30}
+              className="flex-1 px-3 py-1.5 bg-white/5 text-white text-sm rounded-lg border border-white/10 focus:border-violet-500 focus:outline-none placeholder-slate-500"
+            />
+            <button
+              onClick={addInterest}
+              disabled={settings.interests.length >= 10}
+              className="px-3 py-1.5 btn-gradient text-white rounded-lg text-sm disabled:opacity-40"
+            >
+              Add
+            </button>
+          </div>
+          {settings.interests.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {settings.interests.map((tag) => (
+                <span
+                  key={tag}
+                  className="inline-flex items-center gap-1 px-2 py-0.5 bg-violet-600/20 border border-violet-500/30 text-violet-300 text-xs rounded-full"
+                >
+                  #{tag}
+                  <button onClick={() => removeInterest(tag)} className="text-violet-400 hover:text-white leading-none">×</button>
+                </span>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* My Socials */}
+        <div className="border-t border-white/10 pt-5 mb-5">
+          <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">My Socials</p>
+          <p className="text-slate-500 text-xs mb-3">Share with your match in one click during chat</p>
+          {(['instagram', 'snapchat', 'twitter', 'discord'] as const).map((platform) => (
+            <div key={platform} className="mb-2">
+              <label className="block text-xs text-slate-400 mb-1 capitalize">
+                {platform === 'twitter' ? 'X / Twitter' : platform.charAt(0).toUpperCase() + platform.slice(1)}
+              </label>
+              <input
+                type="text"
+                value={settings.socials[platform]}
+                onChange={(e) => onUpdate({ socials: { ...settings.socials, [platform]: e.target.value.trim().slice(0, 50) } })}
+                placeholder={`@username`}
+                className="w-full px-3 py-1.5 bg-white/5 text-white text-sm rounded-lg border border-white/10 focus:border-violet-500 focus:outline-none placeholder-slate-500"
+              />
+            </div>
+          ))}
+        </div>
 
         <button
           onClick={onClose}

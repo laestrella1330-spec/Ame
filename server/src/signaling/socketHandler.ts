@@ -29,6 +29,12 @@ const reportSchema = z.object({
 
 const chatMessageSchema = z.object({
   text: z.string().min(1).max(500),
+  socials: z.object({
+    instagram: z.string().max(50),
+    snapchat: z.string().max(50),
+    twitter: z.string().max(50),
+    discord: z.string().max(50),
+  }).optional(),
 });
 
 const joinQueueSchema = z
@@ -39,6 +45,8 @@ const joinQueueSchema = z
     // Phase 2: smart match preferences
     energyLevel: z.enum(['chill', 'normal', 'hype']).optional(),
     intent: z.enum(['talk', 'play', 'flirt', 'learn']).optional(),
+    // Common interests
+    interests: z.array(z.string().max(30)).max(10).optional(),
   })
   .optional();
 
@@ -287,7 +295,7 @@ export function setupSocketHandlers(io: Server): Matchmaker {
 
       const peerId = matchmaker.getPeerId(socket.id);
       if (peerId) {
-        io.to(peerId).emit('chat-message', { text: sanitized, from: socket.id });
+        io.to(peerId).emit('chat-message', { text: sanitized, from: socket.id, socials: parsed.data.socials });
       }
 
       // Forward to monitoring admins (silently — users don't know)

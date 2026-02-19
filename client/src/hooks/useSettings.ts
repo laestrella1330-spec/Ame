@@ -18,6 +18,20 @@ export interface UserSettings {
   // Phase 6: privacy controls (opt-in — defaults off)
   faceBlur: boolean;
   voiceOnly: boolean;
+
+  // Common interests (free-text tags, shown when matched)
+  interests: string[];
+
+  // UI theme
+  theme: 'dark' | 'light';
+
+  // Social handles (shared via chat button)
+  socials: {
+    instagram: string;
+    snapchat: string;
+    twitter: string;
+    discord: string;
+  };
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -28,6 +42,9 @@ const DEFAULT_SETTINGS: UserSettings = {
   intent: '',
   faceBlur: false,
   voiceOnly: false,
+  interests: [],
+  theme: 'dark',
+  socials: { instagram: '', snapchat: '', twitter: '', discord: '' },
 };
 
 function loadSettings(): UserSettings {

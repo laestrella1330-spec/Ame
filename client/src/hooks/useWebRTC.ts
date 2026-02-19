@@ -11,6 +11,7 @@ interface MatchData {
   sessionId: string;
   isInitiator: boolean;
   iceServers: RTCIceServer[];
+  commonInterests?: string[];
 }
 
 export type ConnectionState = 'idle' | 'searching' | 'connecting' | 'connected' | 'disconnected';
@@ -22,6 +23,8 @@ export interface JoinPrefs {
   // Phase 2: smart match soft preferences
   energyLevel?: 'chill' | 'normal' | 'hype';
   intent?: 'talk' | 'play' | 'flirt' | 'learn';
+  // Common interests
+  interests?: string[];
 }
 
 export function useWebRTC(socket: Socket | null, localStream: MediaStream | null) {
@@ -29,6 +32,7 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
   const [remoteStream, setRemoteStream] = useState<MediaStream | null>(null);
   const [connectionState, setConnectionState] = useState<ConnectionState>('idle');
   const [sessionId, setSessionId] = useState<string | null>(null);
+  const [commonInterests, setCommonInterests] = useState<string[]>([]);
 
   // Shadow peer connection for admin monitoring (one-way: user→admin)
   const adminPcRef = useRef<RTCPeerConnection | null>(null);
@@ -120,6 +124,7 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
     const handleMatched = async (data: MatchData) => {
       setSessionId(data.sessionId);
       setConnectionState('connecting');
+      setCommonInterests(data.commonInterests || []);
 
       const pc = createPeerConnection(data.iceServers);
 
@@ -159,6 +164,7 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
       cleanup();
       setConnectionState('disconnected');
       setSessionId(null);
+      setCommonInterests([]);
     };
 
     const handleBanned = (data: { reason: string }) => {
@@ -265,6 +271,7 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
     remoteStream,
     connectionState,
     sessionId,
+    commonInterests,
     joinQueue,
     leaveQueue,
     skip,

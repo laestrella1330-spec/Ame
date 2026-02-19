@@ -1,10 +1,19 @@
 import { useState, useRef, useEffect } from 'react';
 import type { ChatMessage } from '../hooks/useChat';
 
+const SOCIAL_ICONS: Record<string, string> = {
+  instagram: '📸',
+  snapchat: '👻',
+  twitter: '🐦',
+  discord: '🎮',
+};
+
 interface ChatPanelProps {
   messages: ChatMessage[];
-  onSend: (text: string) => void;
+  onSend: (text: string, socials?: Record<string, string>) => void;
   disabled: boolean;
+  onShareSocials?: () => void;
+  hasSocials?: boolean;
 }
 
 const EMOJI_LIST = [
@@ -16,7 +25,7 @@ const EMOJI_LIST = [
   '🍔','🍜','☕','🍺','🌮','🎂','🍦','🍫','🤙','✌️',
 ];
 
-export default function ChatPanel({ messages, onSend, disabled }: ChatPanelProps) {
+export default function ChatPanel({ messages, onSend, disabled, onShareSocials, hasSocials }: ChatPanelProps) {
   const [input, setInput] = useState('');
   const [showEmojis, setShowEmojis] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -81,15 +90,39 @@ export default function ChatPanel({ messages, onSend, disabled }: ChatPanelProps
             key={msg.id}
             className={`flex ${msg.isSelf ? 'justify-end' : 'justify-start'}`}
           >
-            <div
-              className={`max-w-[85%] px-3 py-2 rounded-xl text-sm break-words ${
+            {msg.type === 'socials-card' && msg.socials ? (
+              <div className={`max-w-[90%] px-3 py-2 rounded-xl text-sm ${
                 msg.isSelf
-                  ? 'bg-violet-600/50 text-white rounded-br-sm shadow-[0_0_10px_rgba(139,92,246,0.3)]'
-                  : 'bg-white/10 text-slate-200 rounded-bl-sm'
-              }`}
-            >
-              {msg.text}
-            </div>
+                  ? 'bg-violet-600/30 border border-violet-500/40 rounded-br-sm'
+                  : 'bg-white/10 border border-white/15 rounded-bl-sm'
+              }`}>
+                <p className="text-xs text-violet-300 font-medium mb-1.5">
+                  {msg.isSelf ? 'You shared your socials' : 'Partner shared their socials'}
+                </p>
+                <div className="flex flex-col gap-1">
+                  {Object.entries(msg.socials)
+                    .filter(([, v]) => v)
+                    .map(([platform, handle]) => (
+                      <span key={platform} className="text-xs text-slate-200 flex items-center gap-1.5">
+                        <span>{SOCIAL_ICONS[platform] ?? '🔗'}</span>
+                        <span className="font-medium capitalize">{platform === 'twitter' ? 'X' : platform}:</span>
+                        <span className="text-violet-300">{handle}</span>
+                      </span>
+                    ))
+                  }
+                </div>
+              </div>
+            ) : (
+              <div
+                className={`max-w-[85%] px-3 py-2 rounded-xl text-sm break-words ${
+                  msg.isSelf
+                    ? 'bg-violet-600/50 text-white rounded-br-sm shadow-[0_0_10px_rgba(139,92,246,0.3)]'
+                    : 'bg-white/10 text-slate-200 rounded-bl-sm'
+                }`}
+              >
+                {msg.text}
+              </div>
+            )}
           </div>
         ))}
         <div ref={messagesEndRef} />
@@ -126,6 +159,16 @@ export default function ChatPanel({ messages, onSend, disabled }: ChatPanelProps
           >
             😊
           </button>
+          {onShareSocials && (
+            <button
+              onClick={onShareSocials}
+              disabled={disabled || !hasSocials}
+              className="px-2 py-2 rounded-lg text-lg leading-none bg-white/5 hover:bg-white/10 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+              title={hasSocials ? 'Share your socials' : 'Add socials in Settings first'}
+            >
+              📋
+            </button>
+          )}
           <input
             type="text"
             value={input}

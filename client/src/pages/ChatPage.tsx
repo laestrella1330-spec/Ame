@@ -50,7 +50,7 @@ export default function ChatPage() {
   const { socket, isConnected } = useSocket();
   const { stream, error, isMuted, isCameraOff, startMedia, stopMedia, toggleMute, toggleCamera } =
     useMediaStream();
-  const { remoteStream, connectionState, sessionId, joinQueue, skip, endChat } = useWebRTC(socket, stream);
+  const { remoteStream, connectionState, sessionId, commonInterests, joinQueue, skip, endChat } = useWebRTC(socket, stream);
   const { messages, sendMessage } = useChat(socket, connectionState);
 
   // Phase 1: AI warm-up
@@ -91,8 +91,17 @@ export default function ChatPage() {
       country: settings.country || undefined,
       energyLevel: (features.smartMatch && settings.energyLevel) ? settings.energyLevel as 'chill' | 'normal' | 'hype' : undefined,
       intent: (features.smartMatch && settings.intent) ? settings.intent as 'talk' | 'play' | 'flirt' | 'learn' : undefined,
+      interests: settings.interests.length > 0 ? settings.interests : undefined,
     });
   }, [joinQueue, settings, features.smartMatch]);
+
+  const handleShareSocials = useCallback(() => {
+    const filled = Object.fromEntries(
+      Object.entries(settings.socials).filter(([, v]) => v.trim())
+    );
+    if (Object.keys(filled).length === 0) return;
+    sendMessage('', filled);
+  }, [settings.socials, sendMessage]);
 
   const handleFindNext = useCallback(() => {
     setPostChatSessionId(null);
@@ -189,11 +198,24 @@ export default function ChatPage() {
             )}
           </div>
 
-          {/* Local Video (small) — blur applied via CSS for Phase 6 */}
+          {/* Common interests badge */}
+          {connectionState === 'connected' && commonInterests.length > 0 && (
+            <div className="flex items-center gap-1.5 flex-wrap mt-1 px-1">
+              <span className="text-xs text-violet-400">🎯 Common:</span>
+              {commonInterests.map((tag) => (
+                <span key={tag} className="text-xs px-2 py-0.5 bg-violet-600/20 border border-violet-500/30 text-violet-300 rounded-full">
+                  #{tag}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Local Video (small) — un-mirrored + blur applied via CSS for Phase 6 */}
           <div className="w-48">
             <VideoPlayer
               stream={stream}
               muted={true}
+              mirror={true}
               className={`aspect-video w-full${features.identityControls && settings.faceBlur ? ' blur-md' : ''}`}
               label="You"
             />
@@ -206,6 +228,8 @@ export default function ChatPage() {
             messages={messages}
             onSend={sendMessage}
             disabled={connectionState !== 'connected'}
+            onShareSocials={handleShareSocials}
+            hasSocials={Object.values(settings.socials).some((v) => v.trim())}
           />
         </div>
       </div>
