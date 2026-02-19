@@ -1,4 +1,5 @@
-import type { UserSettings, Gender, PreferredGender } from '../hooks/useSettings';
+import type { UserSettings, Gender, PreferredGender, EnergyLevel, Intent } from '../hooks/useSettings';
+import { useFeatures } from '../context/FeaturesContext';
 
 const COUNTRIES = [
   { code: '', label: 'Anywhere' },
@@ -61,7 +62,7 @@ interface SettingsPanelProps {
   onLogout: () => void;
 }
 
-function GenderBtn({
+function OptionBtn({
   value,
   current,
   label,
@@ -87,10 +88,46 @@ function GenderBtn({
   );
 }
 
+function Toggle({
+  checked,
+  onChange,
+  label,
+  description,
+}: {
+  checked: boolean;
+  onChange: (v: boolean) => void;
+  label: string;
+  description: string;
+}) {
+  return (
+    <div className="flex items-center justify-between py-2">
+      <div>
+        <p className="text-sm text-slate-200">{label}</p>
+        <p className="text-xs text-slate-500">{description}</p>
+      </div>
+      <button
+        onClick={() => onChange(!checked)}
+        className={`relative w-10 h-5 rounded-full transition-colors flex-shrink-0 ml-4 ${
+          checked ? 'bg-violet-600' : 'bg-white/15'
+        }`}
+        aria-label={label}
+      >
+        <span
+          className={`absolute top-0.5 left-0.5 w-4 h-4 rounded-full bg-white transition-transform ${
+            checked ? 'translate-x-5' : 'translate-x-0'
+          }`}
+        />
+      </button>
+    </div>
+  );
+}
+
 export default function SettingsPanel({ settings, onUpdate, onClose, onLogout }: SettingsPanelProps) {
+  const features = useFeatures();
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="glass rounded-2xl p-6 w-full max-w-md glow-purple relative">
+      <div className="glass rounded-2xl p-6 w-full max-w-md glow-purple relative max-h-[90vh] overflow-y-auto">
         {/* Close */}
         <button
           onClick={onClose}
@@ -106,10 +143,10 @@ export default function SettingsPanel({ settings, onUpdate, onClose, onLogout }:
         <div className="mb-5">
           <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">I am</p>
           <div className="flex gap-2">
-            <GenderBtn value="male" current={settings.gender} label="Male" onClick={() => onUpdate({ gender: 'male' as Gender })} />
-            <GenderBtn value="female" current={settings.gender} label="Female" onClick={() => onUpdate({ gender: 'female' as Gender })} />
-            <GenderBtn value="other" current={settings.gender} label="Other" onClick={() => onUpdate({ gender: 'other' as Gender })} />
-            <GenderBtn value="" current={settings.gender} label="Skip" onClick={() => onUpdate({ gender: '' as Gender })} />
+            <OptionBtn value="male"   current={settings.gender} label="Male"   onClick={() => onUpdate({ gender: 'male'   as Gender })} />
+            <OptionBtn value="female" current={settings.gender} label="Female" onClick={() => onUpdate({ gender: 'female' as Gender })} />
+            <OptionBtn value="other"  current={settings.gender} label="Other"  onClick={() => onUpdate({ gender: 'other'  as Gender })} />
+            <OptionBtn value=""       current={settings.gender} label="Skip"   onClick={() => onUpdate({ gender: ''       as Gender })} />
           </div>
         </div>
 
@@ -117,14 +154,14 @@ export default function SettingsPanel({ settings, onUpdate, onClose, onLogout }:
         <div className="mb-5">
           <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">Looking for</p>
           <div className="flex gap-2">
-            <GenderBtn value="male" current={settings.preferredGender} label="Male" onClick={() => onUpdate({ preferredGender: 'male' as PreferredGender })} />
-            <GenderBtn value="female" current={settings.preferredGender} label="Female" onClick={() => onUpdate({ preferredGender: 'female' as PreferredGender })} />
-            <GenderBtn value="any" current={settings.preferredGender} label="Anyone" onClick={() => onUpdate({ preferredGender: 'any' as PreferredGender })} />
+            <OptionBtn value="male"   current={settings.preferredGender} label="Male"   onClick={() => onUpdate({ preferredGender: 'male'   as PreferredGender })} />
+            <OptionBtn value="female" current={settings.preferredGender} label="Female" onClick={() => onUpdate({ preferredGender: 'female' as PreferredGender })} />
+            <OptionBtn value="any"    current={settings.preferredGender} label="Anyone" onClick={() => onUpdate({ preferredGender: 'any'    as PreferredGender })} />
           </div>
         </div>
 
         {/* Country */}
-        <div className="mb-6">
+        <div className="mb-5">
           <p className="text-slate-400 text-xs uppercase tracking-wider mb-2">Country</p>
           <select
             value={settings.country}
@@ -138,11 +175,54 @@ export default function SettingsPanel({ settings, onUpdate, onClose, onLogout }:
             ))}
           </select>
           {settings.country === '' && (
-            <p className="text-slate-500 text-xs mt-1">
-              Matching with people from all countries
-            </p>
+            <p className="text-slate-500 text-xs mt-1">Matching with people from all countries</p>
           )}
         </div>
+
+        {/* Phase 2: Smart Match Preferences (shown only when flag enabled) */}
+        {features.smartMatch && (
+          <>
+            <div className="border-t border-white/10 pt-5 mb-5">
+              <p className="text-slate-400 text-xs uppercase tracking-wider mb-1">Vibe</p>
+              <p className="text-slate-500 text-xs mb-3">Soft preference — you'll still match with everyone</p>
+              <div className="flex gap-2">
+                <OptionBtn value="chill"  current={settings.energyLevel} label="Chill"  onClick={() => onUpdate({ energyLevel: 'chill'  as EnergyLevel })} />
+                <OptionBtn value="normal" current={settings.energyLevel} label="Normal" onClick={() => onUpdate({ energyLevel: 'normal' as EnergyLevel })} />
+                <OptionBtn value="hype"   current={settings.energyLevel} label="Hype"   onClick={() => onUpdate({ energyLevel: 'hype'   as EnergyLevel })} />
+                <OptionBtn value=""       current={settings.energyLevel} label="Any"    onClick={() => onUpdate({ energyLevel: ''       as EnergyLevel })} />
+              </div>
+            </div>
+
+            <div className="mb-5">
+              <p className="text-slate-400 text-xs uppercase tracking-wider mb-3">I want to</p>
+              <div className="flex gap-2 flex-wrap">
+                <OptionBtn value="talk"  current={settings.intent} label="Talk"  onClick={() => onUpdate({ intent: 'talk'  as Intent })} />
+                <OptionBtn value="play"  current={settings.intent} label="Play"  onClick={() => onUpdate({ intent: 'play'  as Intent })} />
+                <OptionBtn value="learn" current={settings.intent} label="Learn" onClick={() => onUpdate({ intent: 'learn' as Intent })} />
+                <OptionBtn value=""      current={settings.intent} label="Any"   onClick={() => onUpdate({ intent: ''      as Intent })} />
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Phase 6: Privacy Controls (shown only when flag enabled) */}
+        {features.identityControls && (
+          <div className="border-t border-white/10 pt-5 mb-5">
+            <p className="text-slate-400 text-xs uppercase tracking-wider mb-3">Privacy</p>
+            <Toggle
+              checked={settings.faceBlur}
+              onChange={(v) => onUpdate({ faceBlur: v })}
+              label="Face blur"
+              description="Blur your video before connecting"
+            />
+            <Toggle
+              checked={settings.voiceOnly}
+              onChange={(v) => onUpdate({ voiceOnly: v, faceBlur: v ? true : settings.faceBlur })}
+              label="Voice only"
+              description="Disable your camera entirely"
+            />
+          </div>
+        )}
 
         <button
           onClick={onClose}

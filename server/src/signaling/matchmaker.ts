@@ -1,16 +1,21 @@
 import { v4 as uuidv4 } from 'uuid';
 import { Server, Socket } from 'socket.io';
 import { execute } from '../db/connection.js';
-import { ICE_SERVERS } from '../config.js';
+import { ICE_SERVERS, config } from '../config.js';
 import { isBanned, checkAutoban, createBan } from '../services/banService.js';
 import { createReport } from '../services/reportService.js';
 import { logAudit } from '../services/auditService.js';
 import type { QueueEntry, ActiveMatch } from '../types/index.js';
+import { generateWarmUp } from '../agents/warmupAgent.js';
+import { matchBiasScore } from '../agents/matchBiasAgent.js';
 
 export interface JoinPreferences {
   gender?: string;
   preferredGender?: string;
   country?: string;
+  // Phase 2 soft preferences
+  energyLevel?: 'chill' | 'normal' | 'hype';
+  intent?: 'talk' | 'play' | 'flirt' | 'learn';
 }
 
 export class Matchmaker {
@@ -53,6 +58,8 @@ export class Matchmaker {
       gender: prefs?.gender,
       preferredGender: prefs?.preferredGender,
       country: prefs?.country,
+      energyLevel: prefs?.energyLevel,
+      intent: prefs?.intent,
     });
 
     logAudit('queue_join', userId, null, { ip });
@@ -81,6 +88,13 @@ export class Matchmaker {
     if (a.country && b.country && a.country === b.country) score += 2;
     if (!a.preferredGender || a.preferredGender === 'any' || a.preferredGender === b.gender) score += 1;
     if (!b.preferredGender || b.preferredGender === 'any' || b.preferredGender === a.gender) score += 1;
+    // Phase 2: smart match bias (only when feature is enabled)
+    if (config.features.smartMatch) {
+      score += matchBiasScore(
+        { energyLevel: a.energyLevel, intent: a.intent },
+        { energyLevel: b.energyLevel, intent: b.intent },
+      );
+    }
     return score;
   }
 
@@ -145,6 +159,18 @@ export class Matchmaker {
       partnerCountry: entryA.country || null,
       partnerGender: entryA.gender || null,
     });
+
+    // Phase 1: AI warm-up — fire async, do not block match
+    if (config.features.aiWarmup) {
+      generateWarmUp().then((warmup) => {
+        this.io.to(entryA.socketId).emit('warm-up', warmup);
+        this.io.to(entryB.socketId).emit('warm-up', warmup);
+        execute(
+          `INSERT INTO session_ai_events (session_id, event_type, payload) VALUES (?, 'warmup_sent', ?)`,
+          [sessionId, JSON.stringify(warmup)],
+        );
+      }).catch(() => { /* silent — warmup is optional */ });
+    }
   }
 
   skip(socketId: string): void {

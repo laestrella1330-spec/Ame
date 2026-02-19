@@ -36,6 +36,9 @@ const joinQueueSchema = z
     gender: z.enum(['male', 'female', 'other', '']).optional(),
     preferredGender: z.enum(['male', 'female', 'any']).optional(),
     country: z.string().max(2).optional(),
+    // Phase 2: smart match preferences
+    energyLevel: z.enum(['chill', 'normal', 'hype']).optional(),
+    intent: z.enum(['talk', 'play', 'flirt', 'learn']).optional(),
   })
   .optional();
 

@@ -31,6 +31,20 @@ export const config = {
   twilioAccountSid: process.env.TWILIO_ACCOUNT_SID || '',
   twilioAuthToken: process.env.TWILIO_AUTH_TOKEN || '',
   twilioPhoneNumber: process.env.TWILIO_PHONE_NUMBER || '',
+
+  // Anthropic API — used by AI agents
+  anthropicApiKey: process.env.ANTHROPIC_API_KEY || '',
+
+  // ─── AI Feature flags ──────────────────────────────────────────────────────
+  // All off by default — enable in .env or Render dashboard
+  features: {
+    aiWarmup:          process.env.AI_WARMUP_ENABLED === 'true',
+    smartMatch:        process.env.SMART_MATCH_ENABLED === 'true',
+    aiCohost:          process.env.AI_COHOST_ENABLED === 'true',
+    aiSafety:          process.env.AI_SAFETY_ENABLED === 'true',
+    postChatFeedback:  process.env.POST_CHAT_FEEDBACK_ENABLED === 'true',
+    identityControls:  process.env.IDENTITY_CONTROLS_ENABLED === 'true',
+  },
 };
 
 export const ICE_SERVERS = [

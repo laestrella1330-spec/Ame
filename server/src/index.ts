@@ -17,6 +17,8 @@ import reportRoutes from './routes/reports.js';
 import banRoutes from './routes/bans.js';
 import sessionRoutes from './routes/sessions.js';
 import userRoutes from './routes/userRoutes.js';
+import featuresRoutes from './routes/features.js';
+import feedbackRoutes from './routes/feedback.js';
 import { authMiddleware } from './middleware/auth.js';
 
 async function main() {
@@ -72,6 +74,8 @@ async function main() {
   app.use('/api/bans', banRoutes);
   app.use('/api/sessions', sessionRoutes);
   app.use('/api/users', userRoutes);
+  app.use('/api/features', featuresRoutes);
+  app.use('/api/feedback', feedbackRoutes);
 
   // Socket.IO
   const matchmaker = setupSocketHandlers(io);

@@ -108,6 +108,9 @@ export interface QueueEntry {
   gender?: string;
   preferredGender?: string;
   country?: string;
+  // Phase 2: smart match soft preferences
+  energyLevel?: 'chill' | 'normal' | 'hype';
+  intent?: 'talk' | 'play' | 'flirt' | 'learn';
 }
 
 export interface ActiveMatch {

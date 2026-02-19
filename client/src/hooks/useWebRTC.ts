@@ -19,6 +19,9 @@ export interface JoinPrefs {
   gender?: string;
   preferredGender?: string;
   country?: string;
+  // Phase 2: smart match soft preferences
+  energyLevel?: 'chill' | 'normal' | 'hype';
+  intent?: 'talk' | 'play' | 'flirt' | 'learn';
 }
 
 export function useWebRTC(socket: Socket | null, localStream: MediaStream | null) {

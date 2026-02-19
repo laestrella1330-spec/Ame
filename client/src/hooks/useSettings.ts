@@ -2,17 +2,32 @@ import { useState, useCallback } from 'react';
 
 export type Gender = 'male' | 'female' | 'other' | '';
 export type PreferredGender = 'male' | 'female' | 'any';
+export type EnergyLevel = 'chill' | 'normal' | 'hype' | '';
+export type Intent = 'talk' | 'play' | 'flirt' | 'learn' | '';
 
 export interface UserSettings {
+  // Existing preferences
   gender: Gender;
   preferredGender: PreferredGender;
   country: string; // ISO 3166-1 alpha-2, e.g. 'US', '' = any
+
+  // Phase 2: smart match preferences (soft — never block a match)
+  energyLevel: EnergyLevel;
+  intent: Intent;
+
+  // Phase 6: privacy controls (opt-in — defaults off)
+  faceBlur: boolean;
+  voiceOnly: boolean;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
   gender: '',
   preferredGender: 'any',
   country: '',
+  energyLevel: '',
+  intent: '',
+  faceBlur: false,
+  voiceOnly: false,
 };
 
 function loadSettings(): UserSettings {

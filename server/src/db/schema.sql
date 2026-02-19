@@ -107,6 +107,33 @@ CREATE TABLE IF NOT EXISTS audit_logs (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- ─── AI / Smart-match preferences (stored per-user, updated on queue join) ───
+CREATE TABLE IF NOT EXISTS user_match_prefs (
+    user_id TEXT PRIMARY KEY REFERENCES users(id),
+    energy_level TEXT,           -- 'chill' | 'normal' | 'hype'
+    intent TEXT,                 -- 'talk' | 'play' | 'flirt' | 'learn'
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+-- ─── Post-chat feedback ────────────────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS chat_feedback (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL REFERENCES sessions(id),
+    user_id TEXT NOT NULL REFERENCES users(id),
+    mood TEXT NOT NULL,          -- 'fun' | 'awkward' | 'uncomfortable'
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(session_id, user_id)
+);
+
+-- ─── AI session metadata (warm-up prompts, co-host events) ────────────────────
+CREATE TABLE IF NOT EXISTS session_ai_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    session_id TEXT NOT NULL REFERENCES sessions(id),
+    event_type TEXT NOT NULL,    -- 'warmup_sent' | 'cohost_prompt' | 'silence_detected'
+    payload TEXT,                -- JSON blob
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
 -- ─── Indexes ──────────────────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_bans_identifier ON bans(identifier);
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
@@ -117,3 +144,5 @@ CREATE INDEX IF NOT EXISTS idx_users_facebook ON users(facebook_id);
 CREATE INDEX IF NOT EXISTS idx_user_bans_user ON user_bans(user_id);
 CREATE INDEX IF NOT EXISTS idx_audit_logs_event ON audit_logs(event_type);
 CREATE INDEX IF NOT EXISTS idx_otp_phone ON otp_codes(phone, used);
+CREATE INDEX IF NOT EXISTS idx_chat_feedback_session ON chat_feedback(session_id);
+CREATE INDEX IF NOT EXISTS idx_session_ai_events ON session_ai_events(session_id);
