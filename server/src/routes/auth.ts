@@ -229,7 +229,7 @@ router.get('/facebook/start', (_req: Request, res: Response) => {
   const params = new URLSearchParams({
     client_id: config.facebookAppId,
     redirect_uri: config.facebookCallbackUrl,
-    scope: 'email,public_profile',
+    scope: 'public_profile',
     response_type: 'code',
     state: 'ame_oauth',
   });
