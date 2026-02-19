@@ -28,6 +28,7 @@ export default function ChatPage() {
   const [showReport, setShowReport] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [consentAccepted, setConsentAccepted] = useState(false);
+  const [localExpanded, setLocalExpanded] = useState(false);
 
   // Post-chat panel state (Phase 5)
   const [postChatSessionId, setPostChatSessionId] = useState<string | null>(null);
@@ -134,7 +135,7 @@ export default function ChatPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="h-screen overflow-hidden flex flex-col">
       {/* Safety Warning Modal — shown before consent is recorded */}
       {user && !consentAccepted && (
         <SafetyWarningModal onAccepted={() => setConsentAccepted(true)} />
@@ -150,7 +151,7 @@ export default function ChatPage() {
       )}
 
       {/* Header */}
-      <div className="flex items-center justify-between px-4 py-3 glass">
+      <div className="flex-shrink-0 flex items-center justify-between px-4 py-3 glass">
         <img src="/logo.svg" alt="Ame" className="h-8" />
         <div className="flex items-center gap-3">
           {user && (
@@ -176,31 +177,69 @@ export default function ChatPage() {
       </div>
 
       {/* Main Area: Video + Chat */}
-      <div className="flex-1 flex p-4 gap-4 min-h-0">
+      <div className="flex-1 flex p-4 gap-4 min-h-0 overflow-hidden">
         {/* Video Section */}
-        <div className="flex-1 flex items-center justify-center gap-4">
-          {/* Remote Video (large) — relative for overlay positioning */}
-          <div className="flex-1 max-w-3xl relative">
-            <VideoPlayer
-              stream={remoteStream}
-              className="aspect-video w-full"
-              label="Partner"
-            />
+        <div className="flex-1 flex flex-col gap-3 min-h-0">
+          {/* Videos row */}
+          <div className="flex-1 flex gap-3 min-h-0">
+            {/* Remote Video (large) */}
+            <div className="flex-1 relative min-h-0">
+              <VideoPlayer
+                stream={remoteStream}
+                className="w-full h-full"
+                label="Partner"
+              />
 
-            {/* Phase 1: Warm-up card overlay */}
-            {features.aiWarmup && warmUp && connectionState === 'connected' && (
-              <WarmUpCard warmUp={warmUp} onDismiss={dismissWarmUp} />
-            )}
+              {/* Phase 1: Warm-up card overlay */}
+              {features.aiWarmup && warmUp && connectionState === 'connected' && (
+                <WarmUpCard warmUp={warmUp} onDismiss={dismissWarmUp} />
+              )}
 
-            {/* Phase 3: Co-host silence whisper */}
-            {features.aiCohost && whisper && connectionState === 'connected' && (
-              <CoHostWhisper prompt={whisper} onDismiss={dismissWhisper} />
-            )}
+              {/* Phase 3: Co-host silence whisper */}
+              {features.aiCohost && whisper && connectionState === 'connected' && (
+                <CoHostWhisper prompt={whisper} onDismiss={dismissWhisper} />
+              )}
+            </div>
+
+            {/* Local Video — expandable */}
+            <div className={`relative flex-shrink-0 transition-all duration-300 ${localExpanded ? 'w-72' : 'w-44'}`}>
+              <VideoPlayer
+                stream={stream}
+                muted={true}
+                mirror={true}
+                className={`aspect-video w-full${features.identityControls && settings.faceBlur ? ' blur-md' : ''}`}
+                label="You"
+              />
+              {/* Expand / collapse button */}
+              <button
+                onClick={() => setLocalExpanded((v) => !v)}
+                title={localExpanded ? 'Shrink camera' : 'Expand camera'}
+                className="absolute top-2 left-2 w-7 h-7 flex items-center justify-center rounded-full bg-black/50 hover:bg-black/75 text-white transition-all duration-200 hover:scale-110 backdrop-blur-sm border border-white/20 shadow-lg"
+              >
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                  {localExpanded ? (
+                    <>
+                      <polyline points="4 14 10 14 10 20" />
+                      <polyline points="20 10 14 10 14 4" />
+                      <line x1="10" y1="14" x2="3" y2="21" />
+                      <line x1="21" y1="3" x2="14" y2="10" />
+                    </>
+                  ) : (
+                    <>
+                      <polyline points="15 3 21 3 21 9" />
+                      <polyline points="9 21 3 21 3 15" />
+                      <line x1="21" y1="3" x2="14" y2="10" />
+                      <line x1="3" y1="21" x2="10" y2="14" />
+                    </>
+                  )}
+                </svg>
+              </button>
+            </div>
           </div>
 
-          {/* Common interests badge */}
+          {/* Common interests badge — below videos */}
           {connectionState === 'connected' && commonInterests.length > 0 && (
-            <div className="flex items-center gap-1.5 flex-wrap mt-1 px-1">
+            <div className="flex-shrink-0 flex items-center gap-1.5 flex-wrap px-1">
               <span className="text-xs text-violet-400">🎯 Common:</span>
               {commonInterests.map((tag) => (
                 <span key={tag} className="text-xs px-2 py-0.5 bg-violet-600/20 border border-violet-500/30 text-violet-300 rounded-full">
@@ -209,21 +248,10 @@ export default function ChatPage() {
               ))}
             </div>
           )}
-
-          {/* Local Video (small) — un-mirrored + blur applied via CSS for Phase 6 */}
-          <div className="w-48">
-            <VideoPlayer
-              stream={stream}
-              muted={true}
-              mirror={true}
-              className={`aspect-video w-full${features.identityControls && settings.faceBlur ? ' blur-md' : ''}`}
-              label="You"
-            />
-          </div>
         </div>
 
-        {/* Chat Panel */}
-        <div className="w-80 flex-shrink-0">
+        {/* Chat Panel — full height */}
+        <div className="w-80 flex-shrink-0 h-full">
           <ChatPanel
             messages={messages}
             onSend={sendMessage}
@@ -235,7 +263,7 @@ export default function ChatPage() {
       </div>
 
       {/* Controls */}
-      <div className="p-4">
+      <div className="flex-shrink-0 p-4">
         <ChatControls
           connectionState={connectionState}
           isMuted={isMuted}
