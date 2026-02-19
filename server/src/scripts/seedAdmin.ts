@@ -12,7 +12,8 @@ async function main() {
 
   const existing = queryOne('SELECT * FROM admins WHERE username = ?', [username]);
   if (existing) {
-    console.log(`Admin user "${username}" already exists.`);
+    execute('UPDATE admins SET password_hash = ? WHERE username = ?', [hash, username]);
+    console.log(`Admin user "${username}" password reset successfully.`);
   } else {
     execute('INSERT INTO admins (username, password_hash) VALUES (?, ?)', [username, hash]);
     console.log(`Admin user "${username}" created successfully.`);
