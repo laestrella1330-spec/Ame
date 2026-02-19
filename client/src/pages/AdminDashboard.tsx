@@ -178,13 +178,55 @@ export default function AdminDashboard() {
     adminSocketRef.current = sock;
     sock.connect();
 
-    sock.on('monitor-started', (data: { sessionId: string; userA: string; userB: string; startedAt: string; socketA: string; socketB: string }) => {
+    // Admin-initiates: after monitor-started, admin sends recvonly offers to each user.
+    // Users respond with their video stream (sendonly answer).
+    sock.on('monitor-started', async (data: { sessionId: string; userA: string; userB: string; startedAt: string; socketA: string; socketB: string }) => {
       setMonitoredSession(data.sessionId);
       setMonitorInfo({ userA: data.userA, userB: data.userB, startedAt: data.startedAt, socketA: data.socketA, socketB: data.socketB });
       socketUserMapRef.current = { socketA: data.socketA, socketB: data.socketB };
       setMonitorMessages([]);
       setStreamA(null);
       setStreamB(null);
+
+      // Initiate a recvonly WebRTC connection to each user socket
+      for (const [userSocketId, isUserA] of [[data.socketA, true], [data.socketB, false]] as const) {
+        try {
+          const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
+
+          pc.onicecandidate = (event) => {
+            if (event.candidate) {
+              sock.emit('admin-relay', {
+                to: userSocketId,
+                event: 'admin-stream-ice',
+                data: { candidate: event.candidate },
+              });
+            }
+          };
+
+          pc.ontrack = (event) => {
+            const stream = (event.streams && event.streams[0]) || new MediaStream([event.track]);
+            if (isUserA) setStreamA(stream);
+            else setStreamB(stream);
+          };
+
+          adminPcsRef.current.set(userSocketId, pc);
+
+          // recvonly transceivers — admin only receives, never sends
+          pc.addTransceiver('video', { direction: 'recvonly' });
+          pc.addTransceiver('audio', { direction: 'recvonly' });
+
+          const offer = await pc.createOffer();
+          await pc.setLocalDescription(offer);
+
+          sock.emit('admin-relay', {
+            to: userSocketId,
+            event: 'admin-stream-offer',
+            data: { sdp: pc.localDescription },
+          });
+        } catch (err) {
+          console.error('[Admin monitor] Offer error for', userSocketId, err);
+        }
+      }
     });
 
     sock.on('monitor-chat-message', (msg: MonitorMessage) => {
@@ -196,43 +238,14 @@ export default function AdminDashboard() {
       setMonitorInfo(null);
     });
 
-    // Receive video offer from a user and answer it
-    sock.on('admin-stream-offer', async (data: { sdp: RTCSessionDescriptionInit; fromSocketId: string }) => {
+    // Receive user's answer after they respond to our offer
+    sock.on('admin-stream-answer', async (data: { sdp: RTCSessionDescriptionInit; fromSocketId: string }) => {
+      const pc = adminPcsRef.current.get(data.fromSocketId);
+      if (!pc) return;
       try {
-        const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
-
-        pc.onicecandidate = (event) => {
-          if (event.candidate) {
-            sock.emit('admin-relay', {
-              to: data.fromSocketId,
-              event: 'admin-stream-ice',
-              data: { candidate: event.candidate },
-            });
-          }
-        };
-
-        pc.ontrack = (event) => {
-          // event.streams[0] may be undefined on some browsers — fall back to wrapping the track
-          const stream = (event.streams && event.streams[0]) || new MediaStream([event.track]);
-          const mapping = socketUserMapRef.current;
-          if (mapping?.socketA === data.fromSocketId) {
-            setStreamA(stream);
-          } else {
-            setStreamB(stream);
-          }
-        };
-
-        adminPcsRef.current.set(data.fromSocketId, pc);
         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
-        const answer = await pc.createAnswer();
-        await pc.setLocalDescription(answer);
-        sock.emit('admin-relay', {
-          to: data.fromSocketId,
-          event: 'admin-stream-answer',
-          data: { sdp: pc.localDescription },
-        });
       } catch (err) {
-        console.error('Admin stream offer error:', err);
+        console.error('[Admin monitor] Answer error:', err);
       }
     });
 

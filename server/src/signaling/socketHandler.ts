@@ -202,9 +202,7 @@ export function setupSocketHandlers(io: Server): Matchmaker {
           startedAt: session.startedAt,
         });
 
-        // Signal both users to begin streaming to this admin socket
-        io.to(session.socketA).emit('admin-viewer-join', { adminSocketId: socket.id });
-        io.to(session.socketB).emit('admin-viewer-join', { adminSocketId: socket.id });
+        // Admin will initiate WebRTC offers directly via admin-relay after receiving monitor-started.
       });
 
       socket.on('admin-stop-monitor', (data: unknown) => {

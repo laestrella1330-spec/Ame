@@ -182,20 +182,21 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
     };
   }, [socket, createPeerConnection, cleanup]);
 
-  // ── Admin monitoring: shadow one-way video stream to admin ──────────────────
+  // ── Admin monitoring: respond to admin's recvonly offer with local video ──────
+  // Admin sends an offer (recvonly), user answers with their live stream (sendonly).
   useEffect(() => {
     if (!socket) return;
 
-    const handleAdminViewerJoin = async (data: { adminSocketId: string }) => {
+    const handleAdminStreamOffer = async (data: { sdp: RTCSessionDescriptionInit; fromSocketId: string }) => {
       const stream = localStreamRef.current;
       if (!stream) return;
 
-      // Close any existing admin connection
+      // Close any prior admin monitoring connection
       if (adminPcRef.current) {
         adminPcRef.current.close();
         adminPcRef.current = null;
       }
-      adminSocketIdRef.current = data.adminSocketId;
+      adminSocketIdRef.current = data.fromSocketId; // admin's socket id
 
       const pc = new RTCPeerConnection({ iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] });
 
@@ -209,23 +210,23 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
         }
       };
 
-      // Send video + audio to admin (one-way)
-      stream.getTracks().forEach((track) => pc.addTrack(track, stream));
       adminPcRef.current = pc;
 
-      const offer = await pc.createOffer();
-      await pc.setLocalDescription(offer);
-      socket.emit('admin-relay', {
-        to: data.adminSocketId,
-        event: 'admin-stream-offer',
-        data: { sdp: pc.localDescription },
-      });
-    };
-
-    const handleAdminStreamAnswer = async (data: { sdp: RTCSessionDescriptionInit }) => {
-      const pc = adminPcRef.current;
-      if (!pc) return;
-      await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      try {
+        // Set admin's recvonly offer as remote description
+        await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+        // Add local tracks — browser will negotiate sendonly since remote is recvonly
+        stream.getTracks().forEach((track) => pc.addTrack(track, stream));
+        const answer = await pc.createAnswer();
+        await pc.setLocalDescription(answer);
+        socket.emit('admin-relay', {
+          to: data.fromSocketId,
+          event: 'admin-stream-answer',
+          data: { sdp: pc.localDescription },
+        });
+      } catch (err) {
+        console.error('[Monitor] Failed to answer admin offer:', err);
+      }
     };
 
     const handleAdminStreamIce = async (data: { candidate: RTCIceCandidateInit }) => {
@@ -246,14 +247,12 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
       adminSocketIdRef.current = null;
     };
 
-    socket.on('admin-viewer-join', handleAdminViewerJoin);
-    socket.on('admin-stream-answer', handleAdminStreamAnswer);
+    socket.on('admin-stream-offer', handleAdminStreamOffer);
     socket.on('admin-stream-ice', handleAdminStreamIce);
     socket.on('admin-viewer-leave', handleAdminViewerLeave);
 
     return () => {
-      socket.off('admin-viewer-join', handleAdminViewerJoin);
-      socket.off('admin-stream-answer', handleAdminStreamAnswer);
+      socket.off('admin-stream-offer', handleAdminStreamOffer);
       socket.off('admin-stream-ice', handleAdminStreamIce);
       socket.off('admin-viewer-leave', handleAdminViewerLeave);
     };
