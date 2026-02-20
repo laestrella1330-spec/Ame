@@ -23,7 +23,7 @@ export const config = {
   // In production, only these + any CORS_ORIGIN env var are allowed (same-origin
   // requests from the web client don't send an Origin header so they pass through).
   corsOrigin: (() => {
-    const capacitorOrigins = ['capacitor://localhost', 'http://localhost', 'ionic://localhost'];
+    const capacitorOrigins = ['capacitor://localhost', 'http://localhost', 'https://localhost', 'ionic://localhost'];
     if (process.env.CORS_ORIGIN) return [process.env.CORS_ORIGIN, ...capacitorOrigins];
     if (nodeEnv === 'production') return capacitorOrigins;
     return ['http://localhost:5173', ...capacitorOrigins];

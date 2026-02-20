@@ -82,8 +82,8 @@ export default function LoginPage() {
       }
       login(data.token as string, data.user as { id: string; displayName: string });
       navigate('/chat');
-    } catch {
-      setError('Network error. Please try again.');
+    } catch (err) {
+      setError(`Network error: ${err instanceof Error ? err.message : String(err)} [${API_BASE}]`);
     } finally {
       setLoading(false);
     }
@@ -107,8 +107,8 @@ export default function LoginPage() {
       }
       login(data.token as string, data.user as { id: string; displayName: string });
       navigate('/chat');
-    } catch {
-      setError('Network error. Please try again.');
+    } catch (err) {
+      setError(`Network error: ${err instanceof Error ? err.message : String(err)} [${API_BASE}]`);
     } finally {
       setLoading(false);
     }
