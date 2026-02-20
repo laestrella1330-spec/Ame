@@ -1,4 +1,7 @@
-const API_BASE = '/api';
+// In a Capacitor mobile build, VITE_API_URL is set to the production server URL
+// (e.g. https://ame.onrender.com). In web dev/production, it's empty and /api
+// resolves via Vite proxy or same-origin serving.
+export const API_BASE = `${(import.meta.env.VITE_API_URL as string | undefined) ?? ''}/api`;
 
 function getAdminHeaders(): HeadersInit {
   const token = localStorage.getItem('admin_token');

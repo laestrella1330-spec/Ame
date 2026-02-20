@@ -19,8 +19,15 @@ export const config = {
   adminUsername: process.env.ADMIN_USERNAME || 'admin',
   adminPassword: process.env.ADMIN_PASSWORD || 'admin123',
 
-  // CORS — in production (same-origin) leave unset; set for local dev
-  corsOrigin: process.env.CORS_ORIGIN || (nodeEnv === 'production' ? false as const : 'http://localhost:5173'),
+  // CORS — Capacitor mobile apps always send these origins (iOS/Android WebView).
+  // In production, only these + any CORS_ORIGIN env var are allowed (same-origin
+  // requests from the web client don't send an Origin header so they pass through).
+  corsOrigin: (() => {
+    const capacitorOrigins = ['capacitor://localhost', 'http://localhost', 'ionic://localhost'];
+    if (process.env.CORS_ORIGIN) return [process.env.CORS_ORIGIN, ...capacitorOrigins];
+    if (nodeEnv === 'production') return capacitorOrigins;
+    return ['http://localhost:5173', ...capacitorOrigins];
+  })(),
 
   // Facebook OAuth — create app at https://developers.facebook.com
   facebookAppId: process.env.FACEBOOK_APP_ID || '',

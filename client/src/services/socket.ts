@@ -10,7 +10,10 @@ let socket: Socket | null = null;
 export function getSocket(): Socket {
   if (!socket) {
     const token = localStorage.getItem('user_token') ?? '';
-    socket = io(window.location.origin, {
+    // In a Capacitor mobile build, VITE_API_URL is baked in at build time.
+    // In web builds, fall back to window.location.origin (same-origin).
+    const serverUrl = (import.meta.env.VITE_API_URL as string | undefined) || window.location.origin;
+    socket = io(serverUrl, {
       autoConnect: false,
       auth: { token },
     });
