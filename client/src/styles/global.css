@@ -43,7 +43,27 @@ body {
   background-attachment: fixed;
   color: var(--text-base);
   min-height: 100vh;
+  /* Prevent iOS bounce/overscroll */
+  overscroll-behavior: none;
 }
+
+/* Prevent 300ms tap delay and text-selection on buttons */
+button, a {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+/* Prevent iOS from zooming on input focus (requires font-size >= 16px) */
+input, textarea, select {
+  font-size: max(16px, 1em);
+}
+
+/* Safe-area padding helpers for iPhone notch / Dynamic Island */
+.safe-top    { padding-top:    env(safe-area-inset-top); }
+.safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
+.safe-left   { padding-left:   env(safe-area-inset-left); }
+.safe-right  { padding-right:  env(safe-area-inset-right); }
 
 @layer utilities {
   .text-gradient {
