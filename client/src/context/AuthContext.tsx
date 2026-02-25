@@ -1,4 +1,5 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
+import { App } from '@capacitor/app';
 import { userGet } from '../services/api';
 import { disconnectSocket } from '../services/socket';
 
@@ -48,6 +49,29 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Rehydrate on mount
   useEffect(() => { refreshUser(); }, [refreshUser]);
+
+  // Handle Facebook OAuth deep link on Android (Capacitor appUrlOpen event)
+  useEffect(() => {
+    const listenerPromise = App.addListener('appUrlOpen', (data) => {
+      // data.url = "com.ame.videochat://#facebook-auth-success?token=..."
+      const fragment = data.url.split('#')[1];
+      if (!fragment) return;
+      if (fragment.includes('facebook-auth-success')) {
+        const params = new URLSearchParams(fragment.split('?')[1] ?? '');
+        const token = params.get('token');
+        if (token) {
+          localStorage.setItem('user_token', token);
+          refreshUser();
+        }
+      } else if (fragment.includes('auth-error=banned')) {
+        const params = new URLSearchParams(fragment.split('?')[1] ?? '');
+        sessionStorage.setItem('banned_reason', params.get('reason') ?? 'TOS violation');
+        sessionStorage.setItem('banned_days', params.get('days') ?? '0');
+        refreshUser();
+      }
+    });
+    return () => { listenerPromise.then(h => h.remove()); };
+  }, [refreshUser]);
 
   // Handle Facebook OAuth token in URL hash on app load
   useEffect(() => {

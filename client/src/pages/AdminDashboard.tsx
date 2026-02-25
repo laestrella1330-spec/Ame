@@ -93,6 +93,7 @@ export default function AdminDashboard() {
   const [monitoredSession, setMonitoredSession] = useState<string | null>(null);
   const [monitorMessages, setMonitorMessages] = useState<MonitorMessage[]>([]);
   const [monitorInfo, setMonitorInfo] = useState<{ userA: string; userB: string; startedAt: string; socketA: string; socketB: string } | null>(null);
+  const [monitorError, setMonitorError] = useState<string | null>(null);
   const monitorPanelRef = useRef<HTMLDivElement>(null);
   const monitorMsgsEndRef = useRef<HTMLDivElement>(null);
   // Video monitoring — one RTCPeerConnection per user socket
@@ -227,6 +228,11 @@ export default function AdminDashboard() {
           console.error('[Admin monitor] Offer error for', userSocketId, err);
         }
       }
+    });
+
+    sock.on('monitor-error', (data: { message: string }) => {
+      setMonitorError(data.message);
+      setTimeout(() => setMonitorError(null), 5000);
     });
 
     sock.on('monitor-chat-message', (msg: MonitorMessage) => {
@@ -683,6 +689,7 @@ export default function AdminDashboard() {
                         ref={videoARef}
                         autoPlay
                         playsInline
+                        muted
                         className="absolute inset-0 w-full h-full object-cover"
                         style={{ display: streamA ? 'block' : 'none' }}
                       />
@@ -705,6 +712,7 @@ export default function AdminDashboard() {
                         ref={videoBRef}
                         autoPlay
                         playsInline
+                        muted
                         className="absolute inset-0 w-full h-full object-cover"
                         style={{ display: streamB ? 'block' : 'none' }}
                       />
@@ -775,6 +783,14 @@ export default function AdminDashboard() {
                     </>
                   )}
                 </div>
+              </div>
+            )}
+
+            {/* Monitor error toast */}
+            {monitorError && (
+              <div className="flex items-center gap-2 px-4 py-3 bg-red-600/15 border border-red-500/30 rounded-xl text-red-400 text-sm">
+                <span>⚠️</span>
+                <span>{monitorError}</span>
               </div>
             )}
 

@@ -3,6 +3,8 @@ import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../services/api';
 
+const FACEBOOK_AUTH_URL = `${API_BASE}/auth/facebook/start?mobile=1`;
+
 type Mode = 'choose' | 'email-login' | 'email-register' | 'phone';
 
 interface BanInfo {
@@ -198,196 +200,126 @@ export default function LoginPage() {
     );
   }
 
+  const cyberCard: React.CSSProperties = { background: 'rgba(255,255,255,0.03)', backdropFilter: 'blur(14px)', border: '1px solid rgba(139,92,246,0.3)', borderRadius: 20, padding: '24px 22px', boxShadow: '0 0 32px rgba(139,92,246,0.15)' };
+  const cyberInput: React.CSSProperties = { width: '100%', padding: '11px 14px', background: 'rgba(139,92,246,0.08)', color: 'white', borderRadius: 12, border: '1px solid rgba(139,92,246,0.3)', outline: 'none', fontFamily: "'Rajdhani', sans-serif", fontSize: 15, letterSpacing: '0.03em', boxSizing: 'border-box' };
+  const cyberLabel: React.CSSProperties = { display: 'block', fontFamily: "'Orbitron', sans-serif", fontSize: 9, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.7)', marginBottom: 6 };
+  const cyberSubmit: React.CSSProperties = { width: '100%', padding: '13px', background: 'linear-gradient(135deg, #6d28d9, #8B5CF6)', border: 'none', borderRadius: 40, color: 'white', fontFamily: "'Orbitron', sans-serif", fontSize: 12, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 0 24px rgba(139,92,246,0.55)' };
+  const cyberBack: React.CSSProperties = { background: 'none', border: 'none', color: 'rgba(167,139,250,0.6)', fontFamily: "'Rajdhani', sans-serif", fontSize: 13, letterSpacing: '0.06em', cursor: 'pointer', padding: 0 };
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
+    <div className="min-h-screen flex items-center justify-center p-4" style={{ position: 'relative', overflow: 'hidden' }}>
+      {/* Background grid */}
+      <div style={{ position: 'fixed', inset: 0, backgroundImage: 'radial-gradient(rgba(139,92,246,0.12) 1px, transparent 1px)', backgroundSize: '26px 26px', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', top: '8%', right: '4%', width: 220, height: 220, borderRadius: '50%', background: 'radial-gradient(circle, rgba(109,40,217,0.28) 0%, transparent 70%)', filter: 'blur(55px)', pointerEvents: 'none', zIndex: 0 }} />
+      <div style={{ position: 'fixed', bottom: '8%', left: '3%', width: 180, height: 180, borderRadius: '50%', background: 'radial-gradient(circle, rgba(124,58,237,0.2) 0%, transparent 70%)', filter: 'blur(45px)', pointerEvents: 'none', zIndex: 0 }} />
+
+      <div className="w-full max-w-md" style={{ position: 'relative', zIndex: 1 }}>
         {/* Logo */}
         <div className="text-center mb-8 animate-float">
-          <img src="/logo.svg" alt="Ame" className="h-14 mx-auto mb-3" />
-          <p className="text-slate-400 text-sm">Sign in to start chatting</p>
+          <img src="/logo.png" alt="Ame" style={{ height: 80, margin: '0 auto 12px', filter: 'drop-shadow(0 0 20px rgba(139,92,246,0.55))' }} />
+          <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 13, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.65)' }}>Sign in to start chatting</p>
         </div>
 
         {/* Error */}
         {error && (
-          <div className="bg-red-600/20 border border-red-600/30 text-red-400 text-sm p-3 rounded-xl mb-4">
+          <div style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)', color: '#f87171', fontSize: 13, padding: '10px 14px', borderRadius: 12, marginBottom: 14, fontFamily: "'Rajdhani', sans-serif", letterSpacing: '0.03em' }}>
             {error}
           </div>
         )}
 
         {/* ── Method chooser ── */}
         {mode === 'choose' && (
-          <div className="glass rounded-2xl p-6 glow-purple space-y-3">
-            <h2 className="text-white font-semibold text-center mb-4">Choose how to sign in</h2>
-
-            <button
-              onClick={() => setMode('email-login')}
-              className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 flex items-center gap-3 px-4 transition-all"
-            >
-              <span className="text-xl">✉️</span>
-              <span>Email & Password</span>
-            </button>
-
-            <button
-              onClick={() => setMode('phone')}
-              className="w-full py-3 rounded-xl bg-white/5 hover:bg-white/10 text-white border border-white/10 flex items-center gap-3 px-4 transition-all"
-            >
-              <span className="text-xl">📱</span>
-              <span>Phone Number (OTP)</span>
-            </button>
-
-            <a
-              href="/api/auth/facebook/start"
-              className="w-full py-3 rounded-xl bg-blue-700/30 hover:bg-blue-700/50 text-white border border-blue-600/30 flex items-center gap-3 px-4 transition-all block text-center"
-            >
-              <span className="text-xl">📘</span>
-              <span>Continue with Facebook</span>
-            </a>
-
-            <p className="text-center text-slate-500 text-xs pt-2">
+          <div style={cyberCard}>
+            <p style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 11, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.7)', margin: '0 0 16px', textAlign: 'center' }}>Choose Sign-In Method</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+              {[
+                { label: 'Email & Password', icon: '✉️', action: () => setMode('email-login') },
+                { label: 'Phone Number (OTP)', icon: '📱', action: () => setMode('phone') },
+              ].map(({ label, icon, action }) => (
+                <button key={label} onClick={action}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.25)', borderRadius: 14, color: 'rgba(226,232,240,0.9)', fontFamily: "'Rajdhani', sans-serif", fontSize: 15, letterSpacing: '0.04em', cursor: 'pointer', transition: 'all 0.2s' }}>
+                  <span style={{ fontSize: 18 }}>{icon}</span><span>{label}</span>
+                </button>
+              ))}
+              <a href={FACEBOOK_AUTH_URL}
+                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 14, color: 'rgba(226,232,240,0.9)', fontFamily: "'Rajdhani', sans-serif", fontSize: 15, letterSpacing: '0.04em', textDecoration: 'none' }}>
+                <span style={{ fontSize: 18 }}>📘</span><span>Continue with Facebook</span>
+              </a>
+            </div>
+            <p style={{ textAlign: 'center', fontFamily: "'Rajdhani', sans-serif", fontSize: 12, color: 'rgba(100,116,139,0.8)', marginTop: 14 }}>
               No account?{' '}
-              <button
-                onClick={() => setMode('email-register')}
-                className="text-violet-400 hover:underline"
-              >
-                Register with email
-              </button>
+              <button onClick={() => setMode('email-register')} style={{ background: 'none', border: 'none', color: 'rgba(167,139,250,0.85)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}>Register with email</button>
             </p>
           </div>
         )}
 
         {/* ── Email Login ── */}
         {mode === 'email-login' && (
-          <form onSubmit={handleEmailLogin} className="glass rounded-2xl p-6 glow-purple space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <button type="button" onClick={() => setMode('choose')} className="text-slate-400 hover:text-white text-sm">← Back</button>
-              <h2 className="text-white font-semibold">Sign In</h2>
+          <form onSubmit={handleEmailLogin} style={{ ...cyberCard, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+              <button type="button" onClick={() => setMode('choose')} style={cyberBack}>← Back</button>
+              <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 11, letterSpacing: '0.14em', color: 'rgba(167,139,250,0.8)' }}>SIGN IN</span>
             </div>
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
-                className="w-full p-2.5 bg-white/5 text-white rounded-lg border border-white/10 focus:border-violet-500 focus:outline-none text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Password</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required
-                className="w-full p-2.5 bg-white/5 text-white rounded-lg border border-white/10 focus:border-violet-500 focus:outline-none text-sm" />
-            </div>
-            <button type="submit" disabled={loading}
-              className="w-full py-2.5 btn-gradient text-white rounded-lg font-medium disabled:opacity-50">
-              {loading ? 'Signing in…' : 'Sign In'}
-            </button>
-            <p className="text-center text-slate-500 text-xs">
-              No account?{' '}
-              <button type="button" onClick={() => setMode('email-register')} className="text-violet-400 hover:underline">
-                Register
-              </button>
+            <div><label style={cyberLabel}>Email</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={cyberInput} /></div>
+            <div><label style={cyberLabel}>Password</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required style={cyberInput} /></div>
+            <button type="submit" disabled={loading} style={{ ...cyberSubmit, opacity: loading ? 0.5 : 1 }}>{loading ? 'Signing in…' : 'Sign In'}</button>
+            <p style={{ textAlign: 'center', fontFamily: "'Rajdhani', sans-serif", fontSize: 12, color: 'rgba(100,116,139,0.8)', margin: 0 }}>
+              No account?{' '}<button type="button" onClick={() => setMode('email-register')} style={{ background: 'none', border: 'none', color: 'rgba(167,139,250,0.85)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}>Register</button>
             </p>
           </form>
         )}
 
         {/* ── Email Register ── */}
         {mode === 'email-register' && (
-          <form onSubmit={handleEmailRegister} className="glass rounded-2xl p-6 glow-purple space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <button type="button" onClick={() => setMode('choose')} className="text-slate-400 hover:text-white text-sm">← Back</button>
-              <h2 className="text-white font-semibold">Create Account</h2>
+          <form onSubmit={handleEmailRegister} style={{ ...cyberCard, display: 'flex', flexDirection: 'column', gap: 16 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
+              <button type="button" onClick={() => setMode('choose')} style={cyberBack}>← Back</button>
+              <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 11, letterSpacing: '0.14em', color: 'rgba(167,139,250,0.8)' }}>CREATE ACCOUNT</span>
             </div>
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Display Name</label>
-              <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required maxLength={50}
-                className="w-full p-2.5 bg-white/5 text-white rounded-lg border border-white/10 focus:border-violet-500 focus:outline-none text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Email</label>
-              <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required
-                className="w-full p-2.5 bg-white/5 text-white rounded-lg border border-white/10 focus:border-violet-500 focus:outline-none text-sm" />
-            </div>
-            <div>
-              <label className="block text-xs text-slate-400 mb-1">Password (min 8 chars)</label>
-              <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8}
-                className="w-full p-2.5 bg-white/5 text-white rounded-lg border border-white/10 focus:border-violet-500 focus:outline-none text-sm" />
-            </div>
-            <button type="submit" disabled={loading}
-              className="w-full py-2.5 btn-gradient text-white rounded-lg font-medium disabled:opacity-50">
-              {loading ? 'Creating account…' : 'Create Account'}
-            </button>
-            <p className="text-center text-slate-500 text-xs">
-              Already registered?{' '}
-              <button type="button" onClick={() => setMode('email-login')} className="text-violet-400 hover:underline">
-                Sign in
-              </button>
+            <div><label style={cyberLabel}>Display Name</label><input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} required maxLength={50} style={cyberInput} /></div>
+            <div><label style={cyberLabel}>Email</label><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required style={cyberInput} /></div>
+            <div><label style={cyberLabel}>Password (min 8 chars)</label><input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={8} style={cyberInput} /></div>
+            <button type="submit" disabled={loading} style={{ ...cyberSubmit, opacity: loading ? 0.5 : 1 }}>{loading ? 'Creating…' : 'Create Account'}</button>
+            <p style={{ textAlign: 'center', fontFamily: "'Rajdhani', sans-serif", fontSize: 12, color: 'rgba(100,116,139,0.8)', margin: 0 }}>
+              Already registered?{' '}<button type="button" onClick={() => setMode('email-login')} style={{ background: 'none', border: 'none', color: 'rgba(167,139,250,0.85)', cursor: 'pointer', fontFamily: 'inherit', fontSize: 'inherit' }}>Sign in</button>
             </p>
           </form>
         )}
 
         {/* ── Phone OTP ── */}
         {mode === 'phone' && (
-          <div className="glass rounded-2xl p-6 glow-purple space-y-4">
-            <div className="flex items-center gap-2 mb-2">
-              <button onClick={() => setMode('choose')} className="text-slate-400 hover:text-white text-sm">← Back</button>
-              <h2 className="text-white font-semibold">Phone Verification</h2>
+          <div style={cyberCard}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+              <button onClick={() => setMode('choose')} style={cyberBack}>← Back</button>
+              <span style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 11, letterSpacing: '0.14em', color: 'rgba(167,139,250,0.8)' }}>PHONE VERIFY</span>
             </div>
-
             {devOtpNote && (
-              <div className="bg-yellow-600/20 border border-yellow-600/30 text-yellow-400 text-xs p-3 rounded-lg space-y-1">
-                <p className="font-medium">Dev mode — Twilio not configured</p>
-                {devOtpCode ? (
-                  <p>Your code: <span className="font-mono text-base tracking-widest text-yellow-300">{devOtpCode}</span></p>
-                ) : (
-                  <p>Check the server console for the OTP code.</p>
-                )}
+              <div style={{ background: 'rgba(234,179,8,0.1)', border: '1px solid rgba(234,179,8,0.3)', color: '#fbbf24', fontSize: 12, padding: '10px 14px', borderRadius: 10, marginBottom: 14, fontFamily: "'Rajdhani', sans-serif" }}>
+                <p style={{ margin: '0 0 4px', fontWeight: 600 }}>Dev mode — Twilio not configured</p>
+                {devOtpCode ? <p style={{ margin: 0 }}>Code: <span style={{ fontFamily: 'monospace', letterSpacing: '0.2em', color: '#fde047' }}>{devOtpCode}</span></p> : <p style={{ margin: 0 }}>Check server console.</p>}
               </div>
             )}
-
             {!otpSent ? (
-              <form onSubmit={handleSendOtp} className="space-y-4">
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">Phone Number (with country code)</label>
-                  <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required
-                    placeholder="+1 555 000 1234"
-                    className="w-full p-2.5 bg-white/5 text-white rounded-lg border border-white/10 focus:border-violet-500 focus:outline-none text-sm" />
-                </div>
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">Display Name (optional)</label>
-                  <input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={50}
-                    placeholder="How others will see you"
-                    className="w-full p-2.5 bg-white/5 text-white rounded-lg border border-white/10 focus:border-violet-500 focus:outline-none text-sm" />
-                </div>
-                <button type="submit" disabled={loading}
-                  className="w-full py-2.5 btn-gradient text-white rounded-lg font-medium disabled:opacity-50">
-                  {loading ? 'Sending…' : 'Send OTP'}
-                </button>
+              <form onSubmit={handleSendOtp} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <div><label style={cyberLabel}>Phone (with country code)</label><input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} required placeholder="+1 555 000 1234" style={cyberInput} /></div>
+                <div><label style={cyberLabel}>Display Name (optional)</label><input type="text" value={displayName} onChange={(e) => setDisplayName(e.target.value)} maxLength={50} placeholder="How others will see you" style={cyberInput} /></div>
+                <button type="submit" disabled={loading} style={{ ...cyberSubmit, opacity: loading ? 0.5 : 1 }}>{loading ? 'Sending…' : 'Send OTP'}</button>
               </form>
             ) : (
-              <form onSubmit={handleVerifyOtp} className="space-y-4">
-                <p className="text-slate-300 text-sm">
-                  A 6-digit code was sent to <span className="text-white">{phone}</span>
-                </p>
-                <div>
-                  <label className="block text-xs text-slate-400 mb-1">Enter OTP Code</label>
-                  <input type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6}
-                    value={otpCode} onChange={(e) => setOtpCode(e.target.value)} required
-                    placeholder="123456"
-                    className="w-full p-2.5 bg-white/5 text-white rounded-lg border border-white/10 focus:border-violet-500 focus:outline-none text-sm tracking-widest text-center text-lg" />
-                </div>
-                <button type="submit" disabled={loading || otpCode.length !== 6}
-                  className="w-full py-2.5 btn-gradient text-white rounded-lg font-medium disabled:opacity-50">
-                  {loading ? 'Verifying…' : 'Verify & Sign In'}
-                </button>
-                <button type="button" onClick={() => { setOtpSent(false); setOtpCode(''); }}
-                  className="w-full text-slate-400 text-sm hover:text-white">
-                  Change number
-                </button>
+              <form onSubmit={handleVerifyOtp} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 14, color: 'rgba(226,232,240,0.8)', margin: 0 }}>Code sent to <span style={{ color: 'white' }}>{phone}</span></p>
+                <div><label style={cyberLabel}>Enter OTP Code</label><input type="text" inputMode="numeric" pattern="[0-9]*" maxLength={6} value={otpCode} onChange={(e) => setOtpCode(e.target.value)} required placeholder="123456" style={{ ...cyberInput, textAlign: 'center', letterSpacing: '0.3em', fontSize: 20 }} /></div>
+                <button type="submit" disabled={loading || otpCode.length !== 6} style={{ ...cyberSubmit, opacity: (loading || otpCode.length !== 6) ? 0.5 : 1 }}>{loading ? 'Verifying…' : 'Verify & Sign In'}</button>
+                <button type="button" onClick={() => { setOtpSent(false); setOtpCode(''); }} style={{ background: 'none', border: 'none', color: 'rgba(167,139,250,0.6)', fontFamily: "'Rajdhani', sans-serif", fontSize: 13, cursor: 'pointer' }}>Change number</button>
               </form>
             )}
           </div>
         )}
 
-        <p className="text-center text-slate-600 text-xs mt-4">
+        <p style={{ textAlign: 'center', fontFamily: "'Rajdhani', sans-serif", fontSize: 11, letterSpacing: '0.04em', color: 'rgba(100,116,139,0.7)', marginTop: 14 }}>
           By signing in you agree to our{' '}
-          <Link to="/terms" className="text-violet-500 hover:underline">Terms</Link>{' '}
-          and{' '}
-          <Link to="/privacy" className="text-violet-500 hover:underline">Privacy Policy</Link>
+          <Link to="/terms" style={{ color: 'rgba(167,139,250,0.75)' }}>Terms</Link>{' '}and{' '}
+          <Link to="/privacy" style={{ color: 'rgba(167,139,250,0.75)' }}>Privacy Policy</Link>
         </p>
       </div>
     </div>

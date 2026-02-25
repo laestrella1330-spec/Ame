@@ -5,12 +5,18 @@ export function useMediaStream() {
   const [error, setError] = useState<string | null>(null);
   const [isMuted, setIsMuted] = useState(false);
   const [isCameraOff, setIsCameraOff] = useState(false);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const streamRef = useRef<MediaStream | null>(null);
+  const facingModeRef = useRef<'user' | 'environment'>('user');
+  const isCameraOffRef = useRef(false);
+
+  useEffect(() => { facingModeRef.current = facingMode; }, [facingMode]);
+  useEffect(() => { isCameraOffRef.current = isCameraOff; }, [isCameraOff]);
 
   const startMedia = useCallback(async () => {
     try {
       const mediaStream = await navigator.mediaDevices.getUserMedia({
-        video: true,
+        video: { facingMode: 'user' },
         audio: true,
       });
       streamRef.current = mediaStream;
@@ -33,29 +39,64 @@ export function useMediaStream() {
     }
   }, []);
 
+  const switchCamera = useCallback(async (): Promise<MediaStreamTrack | null> => {
+    // Must stop the current video track FIRST — Android blocks opening a new
+    // camera while the previous track is still live.
+    const audioTracks = streamRef.current?.getAudioTracks() ?? [];
+    streamRef.current?.getVideoTracks().forEach((t) => t.stop());
+
+    const newFacing: 'user' | 'environment' =
+      facingModeRef.current === 'user' ? 'environment' : 'user';
+
+    let newVideoStream: MediaStream | null = null;
+
+    // Strategy A: exact facingMode — semantically correct, no index guessing
+    try {
+      newVideoStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { exact: newFacing } },
+        audio: false,
+      });
+    } catch {
+      // Strategy B: soft facingMode hint (fallback for devices that reject "exact")
+      try {
+        newVideoStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: newFacing },
+          audio: false,
+        });
+      } catch {
+        return null;
+      }
+    }
+
+    const newVideoTrack = newVideoStream?.getVideoTracks()[0];
+    if (!newVideoTrack) return null;
+    if (isCameraOffRef.current) newVideoTrack.enabled = false;
+
+    const newStream = new MediaStream([...audioTracks, newVideoTrack]);
+    streamRef.current = newStream;
+    setStream(newStream);
+
+    facingModeRef.current = newFacing;
+    setFacingMode(newFacing);
+
+    return newVideoTrack;
+  }, []);
+
   const toggleMute = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getAudioTracks().forEach((track) => {
-        track.enabled = !track.enabled;
-      });
+      streamRef.current.getAudioTracks().forEach((track) => { track.enabled = !track.enabled; });
       setIsMuted((prev) => !prev);
     }
   }, []);
 
   const toggleCamera = useCallback(() => {
     if (streamRef.current) {
-      streamRef.current.getVideoTracks().forEach((track) => {
-        track.enabled = !track.enabled;
-      });
+      streamRef.current.getVideoTracks().forEach((track) => { track.enabled = !track.enabled; });
       setIsCameraOff((prev) => !prev);
     }
   }, []);
 
-  useEffect(() => {
-    return () => {
-      stopMedia();
-    };
-  }, [stopMedia]);
+  useEffect(() => { return () => { stopMedia(); }; }, [stopMedia]);
 
-  return { stream, error, isMuted, isCameraOff, startMedia, stopMedia, toggleMute, toggleCamera };
+  return { stream, error, isMuted, isCameraOff, facingMode, startMedia, stopMedia, switchCamera, toggleMute, toggleCamera };
 }

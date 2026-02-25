@@ -165,6 +165,9 @@ export function setupSocketHandlers(io: Server): Matchmaker {
       userIdToSockets.get(s.userId)!.add(socket.id);
     }
 
+    // Broadcast live online count to all clients
+    io.emit('online_count', io.sockets.sockets.size);
+
     // ── WebRTC relay for admin video monitoring (all socket types) ─────────────
     // Relays WebRTC signaling between users and admin for live video monitoring.
     // Only cross-type relay allowed (user↔admin), never user→user or admin→admin.
@@ -338,6 +341,8 @@ export function setupSocketHandlers(io: Server): Matchmaker {
       matchmaker.handleDisconnect(socket.id);
       socketMessageTimestamps.delete(socket.id);
       decrementIpCount(ip);
+      // Broadcast updated count after this socket leaves
+      io.emit('online_count', io.sockets.sockets.size);
     });
   });
 

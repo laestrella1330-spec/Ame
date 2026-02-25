@@ -12,6 +12,7 @@ interface MatchData {
   isInitiator: boolean;
   iceServers: RTCIceServer[];
   commonInterests?: string[];
+  partnerCountry?: string | null;
 }
 
 export type ConnectionState = 'idle' | 'searching' | 'connecting' | 'connected' | 'disconnected';
@@ -33,6 +34,7 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
   const [connectionState, setConnectionState] = useState<ConnectionState>('idle');
   const [sessionId, setSessionId] = useState<string | null>(null);
   const [commonInterests, setCommonInterests] = useState<string[]>([]);
+  const [partnerCountry, setPartnerCountry] = useState<string | null>(null);
 
   // Shadow peer connection for admin monitoring (one-way: user→admin)
   const adminPcRef = useRef<RTCPeerConnection | null>(null);
@@ -125,6 +127,7 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
       setSessionId(data.sessionId);
       setConnectionState('connecting');
       setCommonInterests(data.commonInterests || []);
+      setPartnerCountry(data.partnerCountry || null);
 
       const pc = createPeerConnection(data.iceServers);
 
@@ -165,6 +168,7 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
       setConnectionState('disconnected');
       setSessionId(null);
       setCommonInterests([]);
+      setPartnerCountry(null);
     };
 
     const handleBanned = (data: { reason: string }) => {
@@ -267,15 +271,24 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
     };
   }, [socket]); // localStreamRef is a ref — no dep needed
 
+  const replaceVideoTrack = useCallback(async (newTrack: MediaStreamTrack) => {
+    const pc = pcRef.current;
+    if (!pc) return;
+    const sender = pc.getSenders().find((s) => s.track?.kind === 'video');
+    if (sender) await sender.replaceTrack(newTrack);
+  }, []);
+
   return {
     remoteStream,
     connectionState,
     sessionId,
     commonInterests,
+    partnerCountry,
     joinQueue,
     leaveQueue,
     skip,
     endChat,
     cleanup,
+    replaceVideoTrack,
   };
 }

@@ -221,26 +221,32 @@ router.post('/phone/verify', (req: Request, res: Response) => {
 });
 
 // ── Facebook OAuth: redirect ──────────────────────────────────────────────────
-router.get('/facebook/start', (_req: Request, res: Response) => {
+router.get('/facebook/start', (req: Request, res: Response) => {
   if (!config.facebookAppId) {
     res.status(501).json({ error: 'Facebook login is not configured' });
     return;
   }
+  // mobile=1 → encode in state so the callback redirects via the deep-link scheme
+  const isMobile = req.query.mobile === '1';
   const params = new URLSearchParams({
     client_id: config.facebookAppId,
     redirect_uri: config.facebookCallbackUrl,
     scope: 'public_profile',
     response_type: 'code',
-    state: 'ame_oauth',
+    state: isMobile ? 'ame_oauth_mobile' : 'ame_oauth',
   });
   res.redirect(`https://www.facebook.com/v18.0/dialog/oauth?${params}`);
 });
 
 // ── Facebook OAuth: callback ──────────────────────────────────────────────────
 router.get('/facebook/callback', async (req: Request, res: Response) => {
-  const { code, error } = req.query as Record<string, string>;
+  const { code, error, state } = req.query as Record<string, string>;
+  // Use Android deep-link scheme for mobile, hash-fragment for web
+  const isMobile = state === 'ame_oauth_mobile';
+  const base = isMobile ? 'com.ame.videochat://' : '/';
+
   if (error || !code) {
-    res.redirect('/#auth-error=facebook_cancelled');
+    res.redirect(`${base}#auth-error=facebook_cancelled`);
     return;
   }
 
@@ -255,7 +261,7 @@ router.get('/facebook/callback', async (req: Request, res: Response) => {
     const tokenResp = await fetch(`https://graph.facebook.com/v18.0/oauth/access_token?${tokenParams}`);
     const tokenData = await tokenResp.json() as { access_token?: string };
     if (!tokenData.access_token) {
-      res.redirect('/#auth-error=facebook_token_failed');
+      res.redirect(`${base}#auth-error=facebook_token_failed`);
       return;
     }
 
@@ -265,7 +271,7 @@ router.get('/facebook/callback', async (req: Request, res: Response) => {
     );
     const profile = await profileResp.json() as { id: string; name: string; email?: string };
     if (!profile.id) {
-      res.redirect('/#auth-error=facebook_profile_failed');
+      res.redirect(`${base}#auth-error=facebook_profile_failed`);
       return;
     }
 
@@ -288,17 +294,17 @@ router.get('/facebook/callback', async (req: Request, res: Response) => {
     const ban = getActiveUserBan(user.id);
     if (ban) {
       const remaining = Math.ceil((new Date(ban.expires_at).getTime() - Date.now()) / 86400000);
-      res.redirect(`/#auth-error=banned&reason=${encodeURIComponent(ban.reason ?? 'TOS violation')}&days=${remaining}`);
+      res.redirect(`${base}#auth-error=banned&reason=${encodeURIComponent(ban.reason ?? 'TOS violation')}&days=${remaining}`);
       return;
     }
 
     updateLastLogin(user.id);
     logAudit('facebook_login', user.id, null, {}, getIp(req));
     const jwtToken = issueUserToken(user.id);
-    res.redirect(`/#facebook-auth-success?token=${jwtToken}&displayName=${encodeURIComponent(user.display_name)}&userId=${user.id}`);
+    res.redirect(`${base}#facebook-auth-success?token=${jwtToken}&displayName=${encodeURIComponent(user.display_name)}&userId=${user.id}`);
   } catch (err) {
     console.error('[Facebook OAuth]', err);
-    res.redirect('/#auth-error=facebook_server_error');
+    res.redirect(`${base}#auth-error=facebook_server_error`);
   }
 });
 
