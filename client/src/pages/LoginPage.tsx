@@ -71,7 +71,7 @@ export default function LoginPage() {
     type FBResponse = { authResponse?: { accessToken: string; userID: string } };
     type FBSDK = { login: (cb: (r: FBResponse) => void, opts: { scope: string }) => void };
     const fb = (window as { FB?: FBSDK }).FB;
-    if (!fb) { setError('Facebook SDK not loaded. Please refresh and try again.'); return; }
+    if (!fb) { window.location.href = `${API_BASE}/auth/facebook/start`; return; }
     fb.login(async (response) => {
       if (!response.authResponse) { setError('Facebook login was cancelled.'); return; }
       setLoading(true);
