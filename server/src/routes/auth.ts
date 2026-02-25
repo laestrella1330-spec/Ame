@@ -308,4 +308,23 @@ router.get('/facebook/callback', async (req: Request, res: Response) => {
   }
 });
 
+// ── Facebook data deletion callback ──────────────────────────────────────────
+// Required by Meta for apps using Facebook Login
+router.get('/delete-data', (_req: Request, res: Response) => {
+  res.send(`
+    <html><body style="font-family:sans-serif;max-width:600px;margin:40px auto">
+      <h2>Data Deletion</h2>
+      <p>To delete your Ame account and all associated data, email us at
+      <a href="mailto:amethystcareer@gmail.com">amethystcareer@gmail.com</a>
+      with subject "Delete my data".</p>
+      <p>We will process your request within 30 days.</p>
+    </body></html>
+  `);
+});
+
+router.post('/delete-data', (req: Request, res: Response) => {
+  // Facebook sends a signed_request when a user deletes app from their FB settings
+  res.json({ url: 'https://ame-cn8y.onrender.com/api/auth/delete-data', confirmation_code: `DEL-${Date.now()}` });
+});
+
 export default router;
