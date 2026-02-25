@@ -234,8 +234,9 @@ router.get('/facebook/start', (req: Request, res: Response) => {
     scope: 'public_profile',
     response_type: 'code',
     state: isMobile ? 'ame_oauth_mobile' : 'ame_oauth',
+    auth_type: 'rerequest',  // force fresh consent dialog, bypass stuck "previously logged in" spinner
   });
-  res.redirect(`https://www.facebook.com/v18.0/dialog/oauth?${params}`);
+  res.redirect(`https://www.facebook.com/v21.0/dialog/oauth?${params}`);
 });
 
 // ── Facebook OAuth: callback ──────────────────────────────────────────────────
@@ -322,7 +323,7 @@ router.get('/delete-data', (_req: Request, res: Response) => {
   `);
 });
 
-router.post('/delete-data', (req: Request, res: Response) => {
+router.post('/delete-data', (_req: Request, res: Response) => {
   // Facebook sends a signed_request when a user deletes app from their FB settings
   res.json({ url: 'https://ame-cn8y.onrender.com/api/auth/delete-data', confirmation_code: `DEL-${Date.now()}` });
 });
