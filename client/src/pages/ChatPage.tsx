@@ -714,14 +714,14 @@ export default function ChatPage() {
           DESKTOP ONLY: Bottom controls bar (overlay)
           ═══════════════════════════════════════════════ */}
       <div
-        className="hidden md:flex absolute bottom-0 left-0 right-0 z-10 safe-bottom items-center gap-3 px-4 py-3"
+        className="hidden md:flex absolute bottom-0 left-0 right-0 z-10 safe-bottom items-center gap-2 px-4 py-2"
         style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 60%, transparent 100%)' }}
       >
         {/* Skip / Next button */}
         {isInChat && (
           <button
             onClick={skip}
-            className="flex-none px-5 py-2 rounded-full text-white text-xs font-semibold active:scale-95 transition-all"
+            className="flex-none px-4 py-1.5 rounded-full text-white text-xs font-semibold active:scale-95 transition-all"
             style={{ background: 'rgba(239,68,68,0.75)', border: '1px solid rgba(239,68,68,0.5)' }}
           >
             NEXT
@@ -729,11 +729,11 @@ export default function ChatPage() {
         )}
 
         {/* Emoji reactions */}
-        <div className="flex-1 flex items-center gap-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+        <div className="flex-1 flex items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
           {REACTIONS.map((emoji) => (
             <button key={emoji} onClick={() => sendMessage(emoji)}
               disabled={!isConnected}
-              className="flex-none text-xl leading-none active:scale-90 transition-all disabled:opacity-30"
+              className="flex-none text-base leading-none active:scale-90 transition-all disabled:opacity-30"
               title={`Send ${emoji}`}>
               {emoji}
             </button>
@@ -743,7 +743,7 @@ export default function ChatPage() {
         {/* Chat toggle */}
         <button
           onClick={() => setShowChat((v) => !v)}
-          className="relative flex-none w-11 h-11 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+          className="relative flex-none w-9 h-9 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
           style={{ background: 'rgba(255,255,255,0.12)' }}
           title="Chat"
         >
