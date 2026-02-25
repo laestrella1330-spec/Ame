@@ -369,7 +369,7 @@ router.get('/delete-data', (_req: Request, res: Response) => {
 
 router.post('/delete-data', (_req: Request, res: Response) => {
   // Facebook sends a signed_request when a user deletes app from their FB settings
-  res.json({ url: 'https://ame-cn8y.onrender.com/api/auth/delete-data', confirmation_code: `DEL-${Date.now()}` });
+  res.json({ url: `${config.appUrl}/api/auth/delete-data`, confirmation_code: `DEL-${Date.now()}` });
 });
 
 export default router;

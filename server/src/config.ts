@@ -19,14 +19,18 @@ export const config = {
   adminUsername: process.env.ADMIN_USERNAME || 'admin',
   adminPassword: process.env.ADMIN_PASSWORD || 'admin123',
 
+  // Public URL of the app (used in emails, callbacks, etc.)
+  appUrl: process.env.APP_URL || 'https://ame-cn8y.onrender.com',
+
   // CORS — Capacitor mobile apps always send these origins (iOS/Android WebView).
   // In production, only these + any CORS_ORIGIN env var are allowed (same-origin
   // requests from the web client don't send an Origin header so they pass through).
   corsOrigin: (() => {
     const capacitorOrigins = ['capacitor://localhost', 'http://localhost', 'https://localhost', 'ionic://localhost'];
-    if (process.env.CORS_ORIGIN) return [process.env.CORS_ORIGIN, ...capacitorOrigins];
-    if (nodeEnv === 'production') return capacitorOrigins;
-    return ['http://localhost:5173', ...capacitorOrigins];
+    const customDomains = ['https://amechatme.app', 'https://www.amechatme.app'];
+    if (process.env.CORS_ORIGIN) return [process.env.CORS_ORIGIN, ...customDomains, ...capacitorOrigins];
+    if (nodeEnv === 'production') return [...customDomains, ...capacitorOrigins];
+    return ['http://localhost:5173', ...customDomains, ...capacitorOrigins];
   })(),
 
   // Facebook OAuth — create app at https://developers.facebook.com
