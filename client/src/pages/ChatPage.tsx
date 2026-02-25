@@ -434,11 +434,11 @@ export default function ChatPage() {
   }
 
   // ══════════════════════════════════════════════════════
-  // CHAT SCREEN — split-screen when connected
+  // CHAT SCREEN — mobile: 50/50 split | desktop: full-screen + PIP
   // ══════════════════════════════════════════════════════
   return (
     <div
-      className="flex flex-col overflow-hidden bg-[#1a1a1a]"
+      className="flex flex-col md:block relative overflow-hidden bg-black"
       style={{ height: '100dvh' }}
     >
       {/* Post-chat feedback */}
@@ -451,11 +451,11 @@ export default function ChatPage() {
       )}
 
       {/* ═══════════════════════════════════════════════
-          TOP PANEL — Stranger's video (50dvh)
+          Stranger's video
+          Mobile: top half (50dvh) | Desktop: full screen bg
           ═══════════════════════════════════════════════ */}
       <div
-        className="relative flex-none overflow-hidden"
-        style={{ height: '50dvh' }}
+        className="relative flex-none overflow-hidden md:absolute md:inset-0 h-[50dvh] md:h-full"
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
       >
@@ -530,10 +530,10 @@ export default function ChatPage() {
       </div>
 
       {/* ═══════════════════════════════════════════════
-          BOTTOM PANEL — Your video (50dvh)
+          MOBILE ONLY: Your video — bottom half (50dvh)
           ═══════════════════════════════════════════════ */}
       <div
-        className="relative flex-none overflow-hidden"
+        className="md:hidden relative flex-none overflow-hidden"
         style={{ height: '50dvh' }}
         onClick={(e) => {
           if ((e.target as Element).closest('button')) return;
@@ -609,12 +609,10 @@ export default function ChatPage() {
           </button>
         </div>
 
-        {/* ── BOTTOM CONTROLS BAR ── */}
+        {/* Mobile bottom controls bar */}
         {showControls && <div className="absolute bottom-0 left-0 right-0 z-10 safe-bottom"
           style={{ background: 'rgba(0,0,0,0.65)' }}>
           <div className="flex items-center gap-2 px-3 py-2.5">
-
-            {/* Scrollable emoji reactions */}
             <div className="flex-1 flex items-center gap-3 overflow-x-auto"
               style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
               {REACTIONS.map((emoji) => (
@@ -626,8 +624,6 @@ export default function ChatPage() {
                 </button>
               ))}
             </div>
-
-            {/* Chat */}
             <button
               onClick={() => setShowChat((v) => !v)}
               className="relative flex-none w-11 h-11 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
@@ -643,6 +639,121 @@ export default function ChatPage() {
             </button>
           </div>
         </div>}
+      </div>
+
+      {/* ═══════════════════════════════════════════════
+          DESKTOP ONLY: Your video PIP (bottom-right corner)
+          ═══════════════════════════════════════════════ */}
+      <div
+        className="hidden md:block absolute z-20"
+        style={{ bottom: 72, right: 20, width: 240, height: 170, borderRadius: 14, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.2)', boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}
+      >
+        <VideoPlayer
+          stream={stream}
+          muted={true}
+          mirror={true}
+          className={`w-full h-full${localBlur ? ' blur-md' : ''}`}
+          videoStyle={{ filter: 'brightness(1.08) contrast(1.05) saturate(1.2)' }}
+        />
+        <div className="absolute top-2 left-2 z-10">
+          <span className="text-white text-xs font-semibold px-2 py-0.5 rounded-full"
+            style={{ background: 'rgba(0,0,0,0.6)' }}>You</span>
+        </div>
+        <div className="absolute top-2 right-2 z-10 flex gap-1.5">
+          <button onClick={toggleMute}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+            style={{ background: isMuted ? '#ef4444' : 'rgba(0,0,0,0.7)', border: `1px solid ${isMuted ? '#ef4444' : 'rgba(255,255,255,0.2)'}` }}
+            title={isMuted ? 'Unmute' : 'Mute'}>
+            {isMuted ? (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="1" y1="1" x2="23" y2="23" />
+                <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6" />
+                <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23" />
+                <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
+              </svg>
+            ) : (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
+              </svg>
+            )}
+          </button>
+          <button onClick={toggleCamera}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+            style={{ background: isCameraOff ? '#ef4444' : 'rgba(0,0,0,0.7)', border: `1px solid ${isCameraOff ? '#ef4444' : 'rgba(255,255,255,0.2)'}` }}
+            title={isCameraOff ? 'Camera on' : 'Camera off'}>
+            {isCameraOff ? (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="1" y1="1" x2="23" y2="23" />
+                <path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34" />
+                <circle cx="12" cy="13" r="3" />
+              </svg>
+            ) : (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M23 7l-7 5 7 5V7z" />
+                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+              </svg>
+            )}
+          </button>
+          <button onClick={handleSwitchCamera}
+            className="w-7 h-7 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+            style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.2)' }}
+            title="Flip camera">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M1 4v6h6" />
+              <path d="M23 20v-6h-6" />
+              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10" />
+              <path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14" />
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════
+          DESKTOP ONLY: Bottom controls bar (overlay)
+          ═══════════════════════════════════════════════ */}
+      <div
+        className="hidden md:flex absolute bottom-0 left-0 right-0 z-10 safe-bottom items-center gap-3 px-4 py-3"
+        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 60%, transparent 100%)' }}
+      >
+        {/* Skip / Next button */}
+        {isInChat && (
+          <button
+            onClick={skip}
+            className="flex-none px-5 py-2 rounded-full text-white text-xs font-semibold active:scale-95 transition-all"
+            style={{ background: 'rgba(239,68,68,0.75)', border: '1px solid rgba(239,68,68,0.5)' }}
+          >
+            NEXT
+          </button>
+        )}
+
+        {/* Emoji reactions */}
+        <div className="flex-1 flex items-center gap-3 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
+          {REACTIONS.map((emoji) => (
+            <button key={emoji} onClick={() => sendMessage(emoji)}
+              disabled={!isConnected}
+              className="flex-none text-xl leading-none active:scale-90 transition-all disabled:opacity-30"
+              title={`Send ${emoji}`}>
+              {emoji}
+            </button>
+          ))}
+        </div>
+
+        {/* Chat toggle */}
+        <button
+          onClick={() => setShowChat((v) => !v)}
+          className="relative flex-none w-11 h-11 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+          style={{ background: 'rgba(255,255,255,0.12)' }}
+          title="Chat"
+        >
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+          </svg>
+          {messages.length > 0 && !showChat && (
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#8B5CF6] rounded-full border border-black/30" />
+          )}
+        </button>
       </div>
 
       {/* Chat bottom sheet */}
