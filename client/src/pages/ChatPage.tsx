@@ -210,12 +210,13 @@ export default function ChatPage() {
 
   // ── Shared standby UI helpers ──────────────────────────────────────
   const STANDBY_BG: React.CSSProperties = {
-    height: '100dvh',
+    minHeight: '100dvh',
     background: 'radial-gradient(ellipse at 50% 25%, #1e0a4e 0%, #0d0720 45%, #06050f 100%)',
-    padding: '20px',
+    padding: '16px 20px',
     color: 'white',
     position: 'relative',
-    overflow: 'hidden',
+    overflowX: 'hidden',
+    overflowY: 'auto',
   };
   const primaryBtn: React.CSSProperties = {
     background: 'linear-gradient(135deg, #6d28d9, #8B5CF6, #7c3aed)',
@@ -304,12 +305,12 @@ export default function ChatPage() {
         )}
 
         {/* ── Logo ── */}
-        <div className="flex flex-col items-center animate-float" style={{ marginBottom: 32, position: 'relative', zIndex: 1 }}>
-          <img src="/logo.png" alt="AME" style={{ width: 190, height: 'auto', marginBottom: 14, filter: 'drop-shadow(0 0 24px rgba(139,92,246,0.55))' }} />
-          <p className="neon-text" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 17, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '0.1em', textShadow: '0 0 16px rgba(139,92,246,1), 0 0 32px rgba(139,92,246,0.5)' }}>
+        <div className="flex flex-col items-center animate-float" style={{ marginBottom: 16, position: 'relative', zIndex: 1 }}>
+          <img src="/logo.png" alt="AME" style={{ width: 90, height: 'auto', marginBottom: 8, filter: 'drop-shadow(0 0 24px rgba(139,92,246,0.55))' }} />
+          <p className="neon-text" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 14, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '0.1em', textShadow: '0 0 16px rgba(139,92,246,1), 0 0 32px rgba(139,92,246,0.5)' }}>
             Connect with the World
           </p>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 7 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 4 }}>
             <div style={{ width: 32, height: 1, background: 'linear-gradient(90deg, transparent, rgba(167,139,250,0.7))' }} />
             <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 11, fontWeight: 500, color: 'rgba(167,139,250,0.7)', margin: 0, letterSpacing: '0.28em', textTransform: 'uppercase' }}>Stay Anonymous</p>
             <div style={{ width: 32, height: 1, background: 'linear-gradient(90deg, rgba(167,139,250,0.7), transparent)' }} />
@@ -319,13 +320,13 @@ export default function ChatPage() {
         {/* ── Camera preview with layered rings ── */}
         <div style={{ position: 'relative', zIndex: 1 }}>
           {stateContent.showCamera ? (
-            <div style={{ position: 'relative', width: 260, height: 260 }}>
+            <div style={{ position: 'relative', width: 220, height: 220 }}>
               {/* Outer pulse ring */}
-              <div className="pulse-ring" style={{ position: 'absolute', inset: -20, borderRadius: '50%', border: '1px solid rgba(139,92,246,0.4)' }} />
+              <div className="pulse-ring" style={{ position: 'absolute', inset: -16, borderRadius: '50%', border: '1px solid rgba(139,92,246,0.4)' }} />
               {/* Mid glow ring */}
-              <div style={{ position: 'absolute', inset: -8, borderRadius: '50%', border: '1px solid rgba(167,139,250,0.55)', boxShadow: '0 0 18px rgba(139,92,246,0.4)' }} />
+              <div style={{ position: 'absolute', inset: -6, borderRadius: '50%', border: '1px solid rgba(167,139,250,0.55)', boxShadow: '0 0 18px rgba(139,92,246,0.4)' }} />
               {/* Video circle */}
-              <div style={{ width: 260, height: 260, borderRadius: '50%', overflow: 'hidden', border: '2px solid #8B5CF6', boxShadow: '0 0 40px rgba(139,92,246,0.55), inset 0 0 20px rgba(0,0,0,0.4)' }}>
+              <div style={{ width: 220, height: 220, borderRadius: '50%', overflow: 'hidden', border: '2px solid #8B5CF6', boxShadow: '0 0 40px rgba(139,92,246,0.55), inset 0 0 20px rgba(0,0,0,0.4)' }}>
                 <VideoPlayer stream={stream} muted={true} mirror={true}
                   className={`w-full h-full${localBlur ? ' blur-md' : ''}`}
                   videoStyle={{ filter: 'brightness(1.08) contrast(1.05) saturate(1.2)' }} />
@@ -366,10 +367,10 @@ export default function ChatPage() {
               )}
             </div>
           ) : (
-            <div style={{ position: 'relative', width: 260, height: 260 }}>
-              <div className="pulse-ring" style={{ position: 'absolute', inset: -20, borderRadius: '50%', border: '1px solid rgba(139,92,246,0.4)' }} />
-              <div style={{ position: 'absolute', inset: -8, borderRadius: '50%', border: '1px solid rgba(167,139,250,0.55)', boxShadow: '0 0 18px rgba(139,92,246,0.4)' }} />
-              <div style={{ width: 260, height: 260, borderRadius: '50%', border: '2px solid rgba(139,92,246,0.6)', boxShadow: '0 0 40px rgba(139,92,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(13,7,32,0.7)' }}>
+            <div style={{ position: 'relative', width: 220, height: 220 }}>
+              <div className="pulse-ring" style={{ position: 'absolute', inset: -16, borderRadius: '50%', border: '1px solid rgba(139,92,246,0.4)' }} />
+              <div style={{ position: 'absolute', inset: -6, borderRadius: '50%', border: '1px solid rgba(167,139,250,0.55)', boxShadow: '0 0 18px rgba(139,92,246,0.4)' }} />
+              <div style={{ width: 220, height: 220, borderRadius: '50%', border: '2px solid rgba(139,92,246,0.6)', boxShadow: '0 0 40px rgba(139,92,246,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(13,7,32,0.7)' }}>
                 {standbyState === 'error' ? (
                   <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="rgba(167,139,250,0.8)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10" /><line x1="12" y1="8" x2="12" y2="12" /><line x1="12" y1="16" x2="12.01" y2="16" />
@@ -392,12 +393,12 @@ export default function ChatPage() {
         </div>
 
         {/* ── Status message ── */}
-        <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 17, fontWeight: 500, margin: '22px 0 0', textAlign: 'center', color: 'rgba(255,255,255,0.85)', letterSpacing: '0.04em', position: 'relative', zIndex: 1 }}>
+        <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 16, fontWeight: 500, margin: '14px 0 0', textAlign: 'center', color: 'rgba(255,255,255,0.85)', letterSpacing: '0.04em', position: 'relative', zIndex: 1 }}>
           {stateContent.statusMessage}
         </p>
 
         {/* ── Online count ── */}
-        <div className="flex items-center gap-2" style={{ margin: '10px 0 22px', position: 'relative', zIndex: 1 }}>
+        <div className="flex items-center gap-2" style={{ margin: '6px 0 14px', position: 'relative', zIndex: 1 }}>
           <div style={{ width: 7, height: 7, borderRadius: '50%', background: '#10B981', boxShadow: '0 0 8px #10B981, 0 0 14px rgba(16,185,129,0.4)' }} />
           <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 12, letterSpacing: '0.16em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.75)' }}>
             {onlineCount > 0 ? `${onlineCount.toLocaleString()} Users Online` : 'Users Online'}
@@ -414,7 +415,7 @@ export default function ChatPage() {
             <button onClick={endChat} className="active:scale-95 transition-all" style={cancelBtn}>Cancel</button>
           )}
           <button onClick={() => setShowSettings(true)} className="active:opacity-60 transition-opacity"
-            style={{ background: 'transparent', border: 'none', color: 'rgba(139,92,246,0.5)', fontSize: 10, fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', marginTop: 22, display: 'flex', alignItems: 'center', gap: 5 }}>
+            style={{ background: 'transparent', border: 'none', color: 'rgba(139,92,246,0.5)', fontSize: 10, fontFamily: "'Orbitron', sans-serif", letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', marginTop: 14, display: 'flex', alignItems: 'center', gap: 5 }}>
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="3" />
               <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />

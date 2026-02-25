@@ -1,23 +1,309 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 60" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 420" fill="none">
   <defs>
-    <linearGradient id="logoGrad" x1="0" y1="0" x2="200" y2="60" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#7c3aed"/>
-      <stop offset="50%" stop-color="#a855f7"/>
-      <stop offset="100%" stop-color="#c084fc"/>
+    <!-- ── Filters ── -->
+    <filter id="hexGlow" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="10" result="b"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 0.35 0 0 0 0 0 0 0 0 0 0.9 0 0 0 1 0" in="b" result="cb"/>
+      <feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="goldGlow" x="-25%" y="-25%" width="150%" height="150%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4" result="b"/>
+      <feColorMatrix type="matrix" values="0 0 0 0 1 0 0 0 0 0.85 0 0 0 0 0 0 0 0 0.7 0" in="b" result="cb"/>
+      <feMerge><feMergeNode in="cb"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="ribbonShadow">
+      <feDropShadow dx="3" dy="5" stdDeviation="7" flood-color="#000000" flood-opacity="0.65"/>
+    </filter>
+    <filter id="textShadow">
+      <feDropShadow dx="2" dy="3" stdDeviation="5" flood-color="#000000" flood-opacity="0.7"/>
+    </filter>
+    <filter id="starGlow" x="-200%" y="-200%" width="500%" height="500%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="1.5" result="b"/>
+      <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- ── Purple gradients for the ribbon A ── -->
+    <!-- Left leg: bright on its left (leading) edge, dark on right (trailing) -->
+    <linearGradient id="lRib" x1="80" y1="195" x2="115" y2="195" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#E0BAFF"/>
+      <stop offset="20%"  stop-color="#C084FC"/>
+      <stop offset="60%"  stop-color="#9333EA"/>
+      <stop offset="100%" stop-color="#4C1D95"/>
     </linearGradient>
-    <linearGradient id="iconBg" x1="0" y1="0" x2="48" y2="48" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#7c3aed"/>
-      <stop offset="100%" stop-color="#a855f7"/>
+    <!-- Right leg: dark on left (trailing) edge, bright on right (leading) -->
+    <linearGradient id="rRib" x1="210" y1="195" x2="322" y2="195" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#4C1D95"/>
+      <stop offset="40%"  stop-color="#9333EA"/>
+      <stop offset="80%"  stop-color="#C084FC"/>
+      <stop offset="100%" stop-color="#E0BAFF"/>
     </linearGradient>
-    <linearGradient id="iconShine" x1="0" y1="0" x2="24" y2="24" gradientUnits="userSpaceOnUse">
-      <stop offset="0%" stop-color="#ffffff" stop-opacity="0.3"/>
-      <stop offset="100%" stop-color="#ffffff" stop-opacity="0"/>
+
+    <!-- ── Gold gradients ── -->
+    <linearGradient id="goldBar" x1="80" y1="193" x2="320" y2="218" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#8B6508"/>
+      <stop offset="15%"  stop-color="#FFD700"/>
+      <stop offset="40%"  stop-color="#FFF0A0"/>
+      <stop offset="65%"  stop-color="#FFD700"/>
+      <stop offset="85%"  stop-color="#FFC857"/>
+      <stop offset="100%" stop-color="#A07210"/>
+    </linearGradient>
+    <linearGradient id="goldV" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#FFF5C0"/>
+      <stop offset="30%"  stop-color="#FFD700"/>
+      <stop offset="65%"  stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#A07210"/>
+    </linearGradient>
+    <linearGradient id="goldText" x1="0" y1="300" x2="0" y2="360" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#FFF8C0"/>
+      <stop offset="30%"  stop-color="#FFD700"/>
+      <stop offset="60%"  stop-color="#D4AF37"/>
+      <stop offset="100%" stop-color="#8B6508"/>
+    </linearGradient>
+    <linearGradient id="curlGold" x1="0" y1="60" x2="0" y2="130" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#FFE87A"/>
+      <stop offset="50%"  stop-color="#FFD700"/>
+      <stop offset="100%" stop-color="#C9920C"/>
+    </linearGradient>
+
+    <!-- ── Hexagon gradients ── -->
+    <linearGradient id="hexStr" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%"   stop-color="#C084FC"/>
+      <stop offset="45%"  stop-color="#9333EA"/>
+      <stop offset="100%" stop-color="#6B46C1"/>
+    </linearGradient>
+    <radialGradient id="hexBg" cx="42%" cy="35%" r="65%">
+      <stop offset="0%"   stop-color="#1e0d45"/>
+      <stop offset="55%"  stop-color="#0d0620"/>
+      <stop offset="100%" stop-color="#04020e"/>
+    </radialGradient>
+
+    <!-- ── Ribbon highlight edge ── -->
+    <linearGradient id="hlLeft" x1="190" y1="78" x2="80" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#EDD5FF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#C084FC" stop-opacity="0.25"/>
+    </linearGradient>
+    <linearGradient id="hlRight" x1="210" y1="78" x2="320" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0%"   stop-color="#EDD5FF" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#C084FC" stop-opacity="0.25"/>
     </linearGradient>
   </defs>
-  <!-- Icon -->
-  <rect x="2" y="6" width="48" height="48" rx="14" fill="url(#iconBg)"/>
-  <rect x="2" y="6" width="48" height="48" rx="14" fill="url(#iconShine)"/>
-  <text x="26" y="40" font-family="Arial, Helvetica, sans-serif" font-size="30" font-weight="bold" fill="white" text-anchor="middle">A</text>
-  <!-- Text -->
-  <text x="62" y="43" font-family="Arial, Helvetica, sans-serif" font-size="38" font-weight="bold" fill="url(#logoGrad)">me</text>
+
+  <!-- ══════════════════════════════════════
+       BACKGROUND — deep black with starfield
+       ══════════════════════════════════════ -->
+  <rect width="400" height="420" fill="#030109"/>
+
+  <!-- White stars — various sizes -->
+  <circle cx="32"  cy="38"  r="1.4" fill="#FFFFFF" opacity="0.70"/>
+  <circle cx="75"  cy="18"  r="1.0" fill="#FFFFFF" opacity="0.55"/>
+  <circle cx="148" cy="12"  r="0.8" fill="#FFFFFF" opacity="0.60"/>
+  <circle cx="255" cy="25"  r="1.2" fill="#FFFFFF" opacity="0.55"/>
+  <circle cx="322" cy="15"  r="1.5" fill="#FFFFFF" opacity="0.65"/>
+  <circle cx="374" cy="52"  r="1.0" fill="#FFFFFF" opacity="0.50"/>
+  <circle cx="390" cy="125" r="0.8" fill="#FFFFFF" opacity="0.45"/>
+  <circle cx="382" cy="205" r="1.2" fill="#FFFFFF" opacity="0.50"/>
+  <circle cx="393" cy="315" r="1.0" fill="#FFFFFF" opacity="0.55"/>
+  <circle cx="360" cy="392" r="1.5" fill="#FFFFFF" opacity="0.60"/>
+  <circle cx="252" cy="408" r="1.0" fill="#FFFFFF" opacity="0.50"/>
+  <circle cx="140" cy="412" r="0.8" fill="#FFFFFF" opacity="0.45"/>
+  <circle cx="42"  cy="390" r="1.2" fill="#FFFFFF" opacity="0.52"/>
+  <circle cx="12"  cy="285" r="1.0" fill="#FFFFFF" opacity="0.55"/>
+  <circle cx="20"  cy="175" r="1.5" fill="#FFFFFF" opacity="0.60"/>
+  <circle cx="8"   cy="78"  r="0.8" fill="#FFFFFF" opacity="0.40"/>
+  <!-- Gold stars -->
+  <circle cx="58"  cy="26"  r="1.2" fill="#FFD700" opacity="0.52"/>
+  <circle cx="200" cy="8"   r="1.5" fill="#FFD700" opacity="0.45"/>
+  <circle cx="338" cy="32"  r="1.0" fill="#FFD700" opacity="0.50"/>
+  <circle cx="386" cy="162" r="1.2" fill="#FFD700" opacity="0.40"/>
+  <circle cx="378" cy="362" r="1.0" fill="#FFD700" opacity="0.45"/>
+  <circle cx="88"  cy="404" r="1.5" fill="#FFD700" opacity="0.50"/>
+  <circle cx="18"  cy="348" r="1.2" fill="#FFD700" opacity="0.42"/>
+  <!-- 4-pointed sparkles -->
+  <path d="M316,92 L317.5,88.5 L319,92 L316,93.5 Z"    fill="#FFFFFF" opacity="0.80" filter="url(#starGlow)"/>
+  <path d="M68, 368 L69.5,364.5 L71,368 L68,369.5 Z"   fill="#FFD700" opacity="0.72" filter="url(#starGlow)"/>
+  <path d="M352,272 L353.5,268.5 L355,272 L352,273.5 Z" fill="#FFFFFF" opacity="0.65" filter="url(#starGlow)"/>
+  <path d="M28, 135 L29.5,131.5 L31,135 L28,136.5 Z"   fill="#FFFFFF" opacity="0.60" filter="url(#starGlow)"/>
+  <!-- Dim stars inside hexagon area -->
+  <circle cx="98"  cy="185" r="0.7" fill="#FFFFFF" opacity="0.22"/>
+  <circle cx="158" cy="98"  r="0.6" fill="#FFD700" opacity="0.18"/>
+  <circle cx="300" cy="145" r="0.7" fill="#FFFFFF" opacity="0.20"/>
+  <circle cx="315" cy="295" r="0.6" fill="#FFFFFF" opacity="0.18"/>
+  <circle cx="102" cy="310" r="0.6" fill="#FFD700" opacity="0.15"/>
+  <circle cx="200" cy="358" r="0.7" fill="#FFFFFF" opacity="0.18"/>
+
+  <!-- ══════════════════════════════════════
+       HEXAGON
+       Pointy-top: cx=200 cy=205 r=165
+       Vertices: (200,40)(343,122)(343,288)(200,370)(57,288)(57,122)
+       ══════════════════════════════════════ -->
+
+  <!-- Outer purple aura (very soft, large) -->
+  <polygon
+    points="200,22 362,110 362,300 200,388 38,300 38,110"
+    fill="none" stroke="#9333EA" stroke-width="22"
+    opacity="0.12" filter="url(#hexGlow)"/>
+
+  <!-- Hexagon body fill -->
+  <polygon
+    points="200,40 343,122 343,288 200,370 57,288 57,122"
+    fill="url(#hexBg)"/>
+
+  <!-- Hexagon glowing border -->
+  <polygon
+    points="200,40 343,122 343,288 200,370 57,288 57,122"
+    fill="none" stroke="url(#hexStr)" stroke-width="4"
+    filter="url(#hexGlow)"/>
+
+  <!-- Hexagon clean border on top -->
+  <polygon
+    points="200,40 343,122 343,288 200,370 57,288 57,122"
+    fill="none" stroke="url(#hexStr)" stroke-width="2"/>
+
+  <!-- ══════════════════════════════════════
+       RIBBON "A"
+       Apex: (200,78)  Left base:(80,300) Right base:(320,300)
+       Ribbon width ≈ 33px
+       ══════════════════════════════════════ -->
+
+  <!-- Drop shadows (offset behind each leg) -->
+  <path d="M 80,300 C 70,232 128,148 190,78 L 208,85 C 162,150 115,234 113,300 Z"
+    fill="#000000" opacity="0.30" transform="translate(5,6)"/>
+  <path d="M 192,78 C 258,148 330,232 322,300 L 287,300 C 280,234 222,150 208,85 Z"
+    fill="#000000" opacity="0.30" transform="translate(5,6)"/>
+
+  <!-- Left ribbon leg -->
+  <path d="M 80,300 C 70,232 128,148 190,78 L 208,85 C 162,150 115,234 113,300 Z"
+    fill="url(#lRib)" filter="url(#ribbonShadow)"/>
+
+  <!-- Right ribbon leg -->
+  <path d="M 192,78 C 258,148 330,232 322,300 L 287,300 C 280,234 222,150 208,85 Z"
+    fill="url(#rRib)" filter="url(#ribbonShadow)"/>
+
+  <!-- Left leg highlight strip (leading edge glow) -->
+  <path d="M 80,300 C 70,232 128,148 190,78 L 194,72 C 136,148 76,232 75,298 Z"
+    fill="url(#hlLeft)" opacity="0.55"/>
+
+  <!-- Right leg highlight strip (leading edge glow) -->
+  <path d="M 322,300 C 330,232 258,148 192,78 L 196,72 C 264,146 338,230 328,298 Z"
+    fill="url(#hlRight)" opacity="0.55"/>
+
+  <!-- ══════════════════════════════════════
+       GOLD CROSSBAR
+       ══════════════════════════════════════ -->
+
+  <!-- Crossbar shadow -->
+  <path d="M 82,206 L 98,190 L 302,190 L 318,206 L 302,222 L 98,222 Z"
+    fill="#000000" opacity="0.35" transform="translate(4,5)"/>
+
+  <!-- Crossbar main body -->
+  <path d="M 82,206 L 98,190 L 302,190 L 318,206 L 302,222 L 98,222 Z"
+    fill="url(#goldBar)" filter="url(#goldGlow)"/>
+
+  <!-- Crossbar top-edge shine -->
+  <line x1="98" y1="190" x2="302" y2="190"
+    stroke="#FFF8C0" stroke-width="2" opacity="0.65"/>
+
+  <!-- ══════════════════════════════════════
+       DECORATIVE CURL + APERTURE (upper right)
+       — play triangle signals VIDEO
+       ══════════════════════════════════════ -->
+
+  <!-- Connector arc from A apex to curl -->
+  <path d="M 200,78 C 222,65 248,68 262,82"
+    fill="none" stroke="url(#curlGold)" stroke-width="3"
+    stroke-linecap="round" opacity="0.80"/>
+
+  <!-- Outer ring -->
+  <circle cx="272" cy="94" r="22"
+    fill="#04020e" stroke="url(#curlGold)" stroke-width="2.2"
+    filter="url(#goldGlow)"/>
+
+  <!-- Inner ring -->
+  <circle cx="272" cy="94" r="13"
+    fill="none" stroke="url(#curlGold)" stroke-width="1.4" opacity="0.70"/>
+
+  <!-- Play ▶ (video indicator) centered in aperture -->
+  <polygon points="266,86 281,94 266,102" fill="url(#goldV)"/>
+
+  <!-- Spiral flourish around outer ring -->
+  <path d="M 272,72 C 290,72 294,94 272,116 C 256,116 250,106 258,98"
+    fill="none" stroke="url(#curlGold)" stroke-width="1.8"
+    stroke-linecap="round" opacity="0.50"/>
+
+  <!-- ══════════════════════════════════════
+       GOLD "me" TEXT
+       Centered in lower hexagon area
+       ══════════════════════════════════════ -->
+
+  <!-- Text shadow -->
+  <text x="200" y="342"
+    text-anchor="middle"
+    font-family="'Arial Black', 'Impact', Arial, Helvetica, sans-serif"
+    font-size="52" font-weight="900"
+    fill="#000000" opacity="0.45"
+    transform="translate(3,4)">me</text>
+
+  <!-- Main gold text -->
+  <text x="200" y="342"
+    text-anchor="middle"
+    font-family="'Arial Black', 'Impact', Arial, Helvetica, sans-serif"
+    font-size="52" font-weight="900"
+    fill="url(#goldText)"
+    filter="url(#goldGlow)">me</text>
+
+  <!-- ══════════════════════════════════════
+       GOLD FLOURISHES  below "me"
+       ══════════════════════════════════════ -->
+
+  <!-- Left tail flourish -->
+  <path d="M 152,356 C 135,362 122,360 115,352"
+    fill="none" stroke="url(#goldV)" stroke-width="2.2"
+    stroke-linecap="round" opacity="0.65"/>
+  <!-- Left small curl -->
+  <path d="M 115,352 C 110,348 112,344 116,343"
+    fill="none" stroke="url(#goldV)" stroke-width="1.5"
+    stroke-linecap="round" opacity="0.50"/>
+
+  <!-- Right tail flourish -->
+  <path d="M 248,356 C 265,362 278,360 285,352"
+    fill="none" stroke="url(#goldV)" stroke-width="2.2"
+    stroke-linecap="round" opacity="0.65"/>
+  <!-- Right small curl -->
+  <path d="M 285,352 C 290,348 288,344 284,343"
+    fill="none" stroke="url(#goldV)" stroke-width="1.5"
+    stroke-linecap="round" opacity="0.50"/>
+
+  <!-- Center underline arc -->
+  <path d="M 148,358 C 175,367 225,367 252,358"
+    fill="none" stroke="url(#goldBar)" stroke-width="1.5"
+    opacity="0.45" stroke-linecap="round"/>
+
+  <!-- ══════════════════════════════════════
+       VIDEO CAMERA BADGE
+       Overlaps lower-right hexagon edge
+       — makes it instantly clear this is video chat
+       ══════════════════════════════════════ -->
+
+  <!-- Badge shadow -->
+  <rect x="292" y="252" width="54" height="34" rx="10"
+    fill="#000000" opacity="0.40" transform="translate(3,4)"/>
+
+  <!-- Badge pill background -->
+  <rect x="292" y="252" width="54" height="34" rx="10"
+    fill="#0d0620" stroke="url(#goldBar)" stroke-width="1.8"/>
+
+  <!-- Camera body (purple rectangle) -->
+  <rect x="295" y="257" width="26" height="24" rx="4"
+    fill="#9333EA" opacity="0.95"/>
+
+  <!-- Camera body highlight -->
+  <rect x="295" y="257" width="26" height="6" rx="4"
+    fill="#C084FC" opacity="0.40"/>
+
+  <!-- Camera lens wedge (gold) -->
+  <polygon points="321,260 338,269 321,278" fill="url(#goldV)"/>
+
+  <!-- Red LIVE dot -->
+  <circle cx="301" cy="262" r="3.5" fill="#FF3B30"/>
+  <circle cx="301" cy="262" r="1.8" fill="#FF7B72"/>
 </svg>
