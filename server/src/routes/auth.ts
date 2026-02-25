@@ -308,6 +308,51 @@ router.get('/facebook/callback', async (req: Request, res: Response) => {
   }
 });
 
+// ── Facebook token exchange (JS SDK popup flow) ───────────────────────────────
+// Web clients use FB.login() popup, then POST the access token here
+router.post('/facebook/token', async (req: Request, res: Response) => {
+  const { accessToken, userID } = req.body;
+  if (!accessToken || !userID) {
+    res.status(400).json({ error: 'accessToken and userID are required' });
+    return;
+  }
+  try {
+    const profileResp = await fetch(
+      `https://graph.facebook.com/me?fields=id,name,email&access_token=${accessToken}`
+    );
+    const profile = await profileResp.json() as { id: string; name: string; email?: string; error?: { message: string } };
+    if (profile.error || profile.id !== userID) {
+      res.status(401).json({ error: 'Invalid Facebook token' });
+      return;
+    }
+
+    let user = findUserByFacebookId(profile.id);
+    if (!user) {
+      if (profile.email) {
+        const byEmail = findUserByEmail(profile.email);
+        if (byEmail) {
+          execute('UPDATE users SET facebook_id = ? WHERE id = ?', [profile.id, byEmail.id]);
+          user = byEmail;
+        }
+      }
+      if (!user) {
+        user = createUserWithFacebook(profile.id, profile.name, profile.email);
+        logAudit('register', user.id, null, { method: 'facebook' }, getIp(req));
+      }
+    }
+
+    if (rejectIfBanned(user.id, res)) return;
+
+    updateLastLogin(user.id);
+    logAudit('facebook_login', user.id, null, { method: 'sdk' }, getIp(req));
+    const token = issueUserToken(user.id);
+    res.json({ token, user: { id: user.id, displayName: user.display_name } });
+  } catch (err) {
+    console.error('[Facebook SDK token]', err);
+    res.status(500).json({ error: 'Facebook authentication failed' });
+  }
+});
+
 // ── Facebook data deletion callback ──────────────────────────────────────────
 // Required by Meta for apps using Facebook Login
 router.get('/delete-data', (_req: Request, res: Response) => {

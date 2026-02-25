@@ -4,6 +4,7 @@ import { useAuth } from '../context/AuthContext';
 import { API_BASE } from '../services/api';
 
 const FACEBOOK_AUTH_URL = `${API_BASE}/auth/facebook/start?mobile=1`;
+const isNativePlatform = !!(window as { Capacitor?: { isNativePlatform?: () => boolean } }).Capacitor?.isNativePlatform?.();
 
 type Mode = 'choose' | 'email-login' | 'email-register' | 'phone';
 
@@ -63,6 +64,34 @@ export default function LoginPage() {
       reason: String(data.reason ?? 'TOS violation'),
       days: String(data.remainingDays ?? 0),
     });
+  };
+
+  // ── Facebook JS SDK login (web only) ─────────────────────────────────────────
+  const handleFacebookSdkLogin = () => {
+    type FBResponse = { authResponse?: { accessToken: string; userID: string } };
+    type FBSDK = { login: (cb: (r: FBResponse) => void, opts: { scope: string }) => void };
+    const fb = (window as { FB?: FBSDK }).FB;
+    if (!fb) { setError('Facebook SDK not loaded. Please refresh and try again.'); return; }
+    fb.login(async (response) => {
+      if (!response.authResponse) { setError('Facebook login was cancelled.'); return; }
+      setLoading(true);
+      try {
+        const res = await fetch(`${API_BASE}/auth/facebook/token`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ accessToken: response.authResponse.accessToken, userID: response.authResponse.userID }),
+        });
+        const data = await res.json() as Record<string, unknown>;
+        if (!res.ok) {
+          if (data.error === 'account_banned') { handleBannedResponse(data); return; }
+          setError(String(data.error ?? 'Facebook login failed'));
+          return;
+        }
+        login(data.token as string, data.user as { id: string; displayName: string });
+        navigate('/chat');
+      } catch { setError('Network error. Please try again.'); }
+      finally { setLoading(false); }
+    }, { scope: 'public_profile,email' });
   };
 
   // ── Email Login ──────────────────────────────────────────────────────────────
@@ -241,10 +270,17 @@ export default function LoginPage() {
                   <span style={{ fontSize: 18 }}>{icon}</span><span>{label}</span>
                 </button>
               ))}
-              <a href={FACEBOOK_AUTH_URL}
-                style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 14, color: 'rgba(226,232,240,0.9)', fontFamily: "'Rajdhani', sans-serif", fontSize: 15, letterSpacing: '0.04em', textDecoration: 'none' }}>
-                <span style={{ fontSize: 18 }}>📘</span><span>Continue with Facebook</span>
-              </a>
+              {isNativePlatform ? (
+                <a href={FACEBOOK_AUTH_URL}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 14, color: 'rgba(226,232,240,0.9)', fontFamily: "'Rajdhani', sans-serif", fontSize: 15, letterSpacing: '0.04em', textDecoration: 'none' }}>
+                  <span style={{ fontSize: 18 }}>📘</span><span>Continue with Facebook</span>
+                </a>
+              ) : (
+                <button onClick={handleFacebookSdkLogin} disabled={loading}
+                  style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', background: 'rgba(59,130,246,0.1)', border: '1px solid rgba(59,130,246,0.25)', borderRadius: 14, color: 'rgba(226,232,240,0.9)', fontFamily: "'Rajdhani', sans-serif", fontSize: 15, letterSpacing: '0.04em', cursor: 'pointer', width: '100%', opacity: loading ? 0.5 : 1 }}>
+                  <span style={{ fontSize: 18 }}>📘</span><span>Continue with Facebook</span>
+                </button>
+              )}
             </div>
             <p style={{ textAlign: 'center', fontFamily: "'Rajdhani', sans-serif", fontSize: 12, color: 'rgba(100,116,139,0.8)', marginTop: 14 }}>
               No account?{' '}
