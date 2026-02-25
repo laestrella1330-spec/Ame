@@ -51,6 +51,7 @@ export default function ChatPage() {
   const [postChatSessionId, setPostChatSessionId] = useState<string | null>(null);
   const [onlineCount, setOnlineCount] = useState<number>(0);
   const [localExpanded, setLocalExpanded] = useState(false);
+  const [swapped, setSwapped] = useState(false);
 
   const { settings, updateSettings } = useSettings();
 
@@ -696,10 +697,16 @@ export default function ChatPage() {
           <div className="flex-1 flex flex-col gap-3 min-h-0">
             <div className="flex-1 flex gap-3 min-h-0">
 
-              {/* Main video — stranger (large) */}
+              {/* Main video — large box (swappable) */}
               <div className="flex-1 relative min-h-0 rounded-2xl overflow-hidden"
                 style={{ border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
-                <VideoPlayer stream={remoteStream} muted={false} mirror={false} className="w-full h-full" />
+                <VideoPlayer
+                  stream={swapped ? stream : remoteStream}
+                  muted={swapped}
+                  mirror={swapped}
+                  className="w-full h-full"
+                  videoStyle={swapped ? { filter: 'brightness(1.08) contrast(1.05) saturate(1.2)' } : undefined}
+                />
 
                 {/* Stranger info */}
                 <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-1.5 items-start">
@@ -731,22 +738,25 @@ export default function ChatPage() {
                 )}
               </div>
 
-              {/* PiP — your video (expandable) */}
+              {/* PiP — small box (swappable, half-height via aspect ratio) */}
               <div
-                className={`relative flex-shrink-0 transition-all duration-300 rounded-2xl overflow-hidden ${localExpanded ? 'w-72' : 'w-44'}`}
-                style={{ border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
+                className={`relative flex-shrink-0 self-start transition-all duration-300 rounded-2xl overflow-hidden ${localExpanded ? 'w-72' : 'w-44'}`}
+                style={{ border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 4px 20px rgba(0,0,0,0.5)', aspectRatio: '3/4' }}
               >
                 <VideoPlayer
-                  stream={stream}
-                  muted={true}
-                  mirror={true}
-                  className={`w-full h-full${localBlur ? ' blur-md' : ''}`}
-                  videoStyle={{ filter: 'brightness(1.08) contrast(1.05) saturate(1.2)' }}
+                  stream={swapped ? remoteStream : stream}
+                  muted={!swapped}
+                  mirror={!swapped}
+                  className={`w-full h-full${!swapped && localBlur ? ' blur-md' : ''}`}
+                  videoStyle={!swapped ? { filter: 'brightness(1.08) contrast(1.05) saturate(1.2)' } : undefined}
                 />
                 <div className="absolute top-2 left-2 z-10">
                   <span className="text-white text-xs font-semibold px-2 py-0.5 rounded-full"
-                    style={{ background: 'rgba(0,0,0,0.6)' }}>You</span>
+                    style={{ background: 'rgba(0,0,0,0.6)' }}>
+                    {swapped ? 'Stranger' : 'You'}
+                  </span>
                 </div>
+                {/* Expand / collapse */}
                 <button
                   onClick={() => setLocalExpanded((v) => !v)}
                   className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
@@ -757,6 +767,18 @@ export default function ChatPage() {
                     {localExpanded
                       ? <><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></>
                       : <><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" /></>}
+                  </svg>
+                </button>
+                {/* Swap arrow */}
+                <button
+                  onClick={() => setSwapped((v) => !v)}
+                  className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+                  style={{ background: 'rgba(0,0,0,0.6)' }}
+                  title="Swap videos"
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M7 16V4m0 0L3 8m4-4l4 4" />
+                    <path d="M17 8v12m0 0l4-4m-4 4l-4-4" />
                   </svg>
                 </button>
               </div>
@@ -783,7 +805,6 @@ export default function ChatPage() {
             isCameraOff={isCameraOff}
             onToggleMute={toggleMute}
             onToggleCamera={toggleCamera}
-            onSwitchCamera={handleSwitchCamera}
             onSkip={skip}
             onEndChat={endChat}
             onReport={() => setShowReport(true)}

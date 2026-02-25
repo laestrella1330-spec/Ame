@@ -6,7 +6,6 @@ interface ChatControlsProps {
   isCameraOff: boolean;
   onToggleMute: () => void;
   onToggleCamera: () => void;
-  onSwitchCamera: () => void;
   onSkip: () => void;
   onEndChat: () => void;
   onReport: () => void;
@@ -21,7 +20,6 @@ export default function ChatControls({
   isCameraOff,
   onToggleMute,
   onToggleCamera,
-  onSwitchCamera,
   onSkip,
   onEndChat,
   onReport,
@@ -34,7 +32,7 @@ export default function ChatControls({
   return (
     <div className="flex items-center justify-between px-1">
 
-      {/* ── Left: mic · cam · flip ── */}
+      {/* ── Left: mic · cam ── */}
       <div className="flex items-center gap-3">
 
         {/* Mic toggle */}
@@ -89,22 +87,6 @@ export default function ChatControls({
           )}
         </button>
 
-        {/* Flip camera (front ↔ back) */}
-        <button
-          onClick={onSwitchCamera}
-          className={`${circleBtn} bg-white/10 border border-white/15 backdrop-blur-sm`}
-          style={{ width: 52, height: 52 }}
-          title="Flip camera"
-        >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M20 7h-9" />
-            <path d="M14 17H5" />
-            <circle cx="17" cy="17" r="3" />
-            <circle cx="7" cy="7" r="3" />
-            <path d="M17 14v6" />
-            <path d="M7 4v6" />
-          </svg>
-        </button>
       </div>
 
       {/* ── Right: action buttons ── */}
