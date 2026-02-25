@@ -13,6 +13,8 @@ import VideoPlayer from '../components/VideoPlayer';
 import ConnectionStatus from '../components/ConnectionStatus';
 import ReportModal from '../components/ReportModal';
 import ChatPanel from '../components/ChatPanel';
+import ChatControls from '../components/ChatControls';
+import AnimatedBackground from '../components/AnimatedBackground';
 import SettingsPanel from '../components/SettingsPanel';
 import SafetyWarningModal from '../components/SafetyWarningModal';
 import WarmUpCard from '../components/WarmUpCard';
@@ -48,6 +50,7 @@ export default function ChatPage() {
   const [consentAccepted, setConsentAccepted] = useState(false);
   const [postChatSessionId, setPostChatSessionId] = useState<string | null>(null);
   const [onlineCount, setOnlineCount] = useState<number>(0);
+  const [localExpanded, setLocalExpanded] = useState(false);
 
   const { settings, updateSettings } = useSettings();
 
@@ -434,341 +437,334 @@ export default function ChatPage() {
   }
 
   // ══════════════════════════════════════════════════════
-  // CHAT SCREEN — mobile: 50/50 split | desktop: full-screen + PIP
+  // CHAT SCREEN — mobile: 50/50 split | desktop: 3-panel + AnimatedBackground
   // ══════════════════════════════════════════════════════
   return (
-    <div
-      className="flex flex-col md:block relative overflow-hidden bg-black"
-      style={{ height: '100dvh' }}
-    >
-      {/* Post-chat feedback */}
-      {postChatSessionId && features.postChatFeedback && (
-        <PostChatPanel
-          sessionId={postChatSessionId}
-          onClose={() => setPostChatSessionId(null)}
-          onFindNext={handleFindNext}
-        />
-      )}
+    <>
+      {/* ══════════════════ MOBILE LAYOUT (md:hidden) ══════════════════ */}
+      <div className="md:hidden flex flex-col relative overflow-hidden bg-black" style={{ height: '100dvh' }}>
+        {postChatSessionId && features.postChatFeedback && (
+          <PostChatPanel sessionId={postChatSessionId} onClose={() => setPostChatSessionId(null)} onFindNext={handleFindNext} />
+        )}
 
-      {/* ═══════════════════════════════════════════════
-          Stranger's video
-          Mobile: top half (50dvh) | Desktop: full screen bg
-          ═══════════════════════════════════════════════ */}
-      <div
-        className="relative flex-none overflow-hidden md:absolute md:inset-0 h-[50dvh] md:h-full"
-        onTouchStart={handleTouchStart}
-        onTouchEnd={handleTouchEnd}
-      >
-        <VideoPlayer stream={remoteStream} muted={false} mirror={false} className="w-full h-full" />
+        {/* Stranger's video — top 50dvh */}
+        <div
+          className="relative flex-none overflow-hidden"
+          style={{ height: '50dvh' }}
+          onTouchStart={handleTouchStart}
+          onTouchEnd={handleTouchEnd}
+        >
+          <VideoPlayer stream={remoteStream} muted={false} mirror={false} className="w-full h-full" />
 
-        {/* Top-left: Logo */}
-        <div className="absolute top-0 left-0 z-10 px-3 py-3 safe-top">
-          <img src="/logo.png" alt="Ame" className="h-7" />
-        </div>
+          {/* Top-left: Logo */}
+          <div className="absolute top-0 left-0 z-10 px-3 py-3 safe-top">
+            <img src="/logo.png" alt="Ame" className="h-7" />
+          </div>
 
-        {/* Top-right: Connected badge + Report + Settings */}
-        <div className="absolute top-3 right-3 z-10 flex items-center gap-2 safe-top">
-          {isConnected && (
-            <span className="text-xs font-semibold" style={{ color: '#22c55e' }}>
-              Connected
-            </span>
-          )}
-          {isInChat && (
+          {/* Top-right: Connected badge + Report + Settings */}
+          <div className="absolute top-3 right-3 z-10 flex items-center gap-2 safe-top">
+            {isConnected && (
+              <span className="text-xs font-semibold" style={{ color: '#22c55e' }}>
+                Connected
+              </span>
+            )}
+            {isInChat && (
+              <button
+                onClick={() => setShowReport(true)}
+                className="w-9 h-9 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+                style={{ background: 'rgba(0,0,0,0.5)' }}
+                title="Report"
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
+                  <line x1="4" y1="22" x2="4" y2="15" />
+                </svg>
+              </button>
+            )}
             <button
-              onClick={() => setShowReport(true)}
+              onClick={() => setShowSettings(true)}
               className="w-9 h-9 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
               style={{ background: 'rgba(0,0,0,0.5)' }}
-              title="Report"
+              title="Settings"
             >
               <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
-                <line x1="4" y1="22" x2="4" y2="15" />
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
               </svg>
             </button>
+          </div>
+
+          {/* Bottom-left: flag + country + common interests */}
+          <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-1.5 items-start">
+            <div className="flex items-center gap-1.5">
+              {flag && <span className="text-xl leading-none">{flag}</span>}
+              <span className="text-white text-xs font-semibold px-3 py-1 rounded-full"
+                style={{ background: 'rgba(0,0,0,0.6)' }}>
+                {partnerCountry ? partnerCountry.toUpperCase() : 'Stranger'}
+              </span>
+            </div>
+            {isInChat && commonInterests.length > 0 && (
+              <div className="flex gap-1 flex-wrap">
+                {commonInterests.map((tag) => (
+                  <span key={tag} className="text-xs px-2 py-0.5 rounded-full text-white"
+                    style={{ background: 'rgba(139,92,246,0.65)', border: '1px solid rgba(139,92,246,0.4)' }}>
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* AI overlays */}
+          {features.aiWarmup && warmUp && isConnected && (
+            <WarmUpCard warmUp={warmUp} onDismiss={dismissWarmUp} />
           )}
-          <button
-            onClick={() => setShowSettings(true)}
-            className="w-9 h-9 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
-            style={{ background: 'rgba(0,0,0,0.5)' }}
-            title="Settings"
-          >
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3" />
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-            </svg>
-          </button>
+          {features.aiCohost && whisper && isConnected && (
+            <CoHostWhisper prompt={whisper} onDismiss={dismissWhisper} />
+          )}
         </div>
 
-        {/* Bottom-left: flag + country + common interests */}
-        <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-1.5 items-start">
-          <div className="flex items-center gap-1.5">
-            {flag && <span className="text-xl leading-none">{flag}</span>}
+        {/* Your video — bottom 50dvh */}
+        <div
+          className="relative flex-none overflow-hidden"
+          style={{ height: '50dvh' }}
+          onClick={(e) => {
+            if ((e.target as Element).closest('button')) return;
+            setShowControls((v) => !v);
+          }}
+        >
+          <VideoPlayer
+            stream={stream}
+            muted={true}
+            mirror={true}
+            className={`w-full h-full${localBlur ? ' blur-md' : ''}`}
+            videoStyle={{ filter: 'brightness(1.08) contrast(1.05) saturate(1.2)' }}
+          />
+
+          {/* You label */}
+          <div className="absolute top-3 left-3 z-10">
             <span className="text-white text-xs font-semibold px-3 py-1 rounded-full"
               style={{ background: 'rgba(0,0,0,0.6)' }}>
-              {partnerCountry ? partnerCountry.toUpperCase() : 'Stranger'}
+              You
             </span>
           </div>
-          {isInChat && commonInterests.length > 0 && (
-            <div className="flex gap-1 flex-wrap">
-              {commonInterests.map((tag) => (
-                <span key={tag} className="text-xs px-2 py-0.5 rounded-full text-white"
-                  style={{ background: 'rgba(139,92,246,0.65)', border: '1px solid rgba(139,92,246,0.4)' }}>
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-        </div>
 
-        {/* AI overlays */}
-        {features.aiWarmup && warmUp && isConnected && (
-          <WarmUpCard warmUp={warmUp} onDismiss={dismissWarmUp} />
-        )}
-        {features.aiCohost && whisper && isConnected && (
-          <CoHostWhisper prompt={whisper} onDismiss={dismissWhisper} />
-        )}
-      </div>
-
-      {/* ═══════════════════════════════════════════════
-          MOBILE ONLY: Your video — bottom half (50dvh)
-          ═══════════════════════════════════════════════ */}
-      <div
-        className="md:hidden relative flex-none overflow-hidden"
-        style={{ height: '50dvh' }}
-        onClick={(e) => {
-          if ((e.target as Element).closest('button')) return;
-          setShowControls((v) => !v);
-        }}
-      >
-        <VideoPlayer
-          stream={stream}
-          muted={true}
-          mirror={true}
-          className={`w-full h-full${localBlur ? ' blur-md' : ''}`}
-          videoStyle={{ filter: 'brightness(1.08) contrast(1.05) saturate(1.2)' }}
-        />
-
-        {/* You label */}
-        <div className="absolute top-3 left-3 z-10">
-          <span className="text-white text-xs font-semibold px-3 py-1 rounded-full"
-            style={{ background: 'rgba(0,0,0,0.6)' }}>
-            You
-          </span>
-        </div>
-
-        {/* Top-right: Mic · Cam · Flip */}
-        <div className="absolute top-3 right-3 z-10 flex gap-2">
-          <button onClick={toggleMute}
-            className="w-9 h-9 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
-            style={{ background: isMuted ? '#ef4444' : 'rgba(0,0,0,0.5)' }}
-            title={isMuted ? 'Unmute' : 'Mute'}>
-            {isMuted ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="1" y1="1" x2="23" y2="23" />
-                <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6" />
-                <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23" />
-                <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
-            )}
-          </button>
-
-          <button onClick={toggleCamera}
-            className="w-9 h-9 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
-            style={{ background: isCameraOff ? '#ef4444' : 'rgba(0,0,0,0.5)' }}
-            title={isCameraOff ? 'Camera on' : 'Camera off'}>
-            {isCameraOff ? (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="1" y1="1" x2="23" y2="23" />
-                <path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34" />
-                <circle cx="12" cy="13" r="3" />
-              </svg>
-            ) : (
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M23 7l-7 5 7 5V7z" />
-                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-              </svg>
-            )}
-          </button>
-
-          <button onClick={handleSwitchCamera}
-            className="w-9 h-9 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
-            style={{ background: 'rgba(0,0,0,0.5)' }}
-            title="Flip camera">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 4v6h6" />
-              <path d="M23 20v-6h-6" />
-              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10" />
-              <path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14" />
-            </svg>
-          </button>
-        </div>
-
-        {/* Mobile bottom controls bar */}
-        {showControls && <div className="absolute bottom-0 left-0 right-0 z-10 safe-bottom"
-          style={{ background: 'rgba(0,0,0,0.65)' }}>
-          <div className="flex items-center gap-2 px-3 py-2.5">
-            <div className="flex-1 flex items-center gap-3 overflow-x-auto"
-              style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
-              {REACTIONS.map((emoji) => (
-                <button key={emoji} onClick={() => sendMessage(emoji)}
-                  disabled={!isConnected}
-                  className="flex-none text-xl leading-none active:scale-90 transition-all disabled:opacity-30"
-                  title={`Send ${emoji}`}>
-                  {emoji}
-                </button>
-              ))}
-            </div>
-            <button
-              onClick={() => setShowChat((v) => !v)}
-              className="relative flex-none w-11 h-11 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
-              style={{ background: 'rgba(255,255,255,0.12)' }}
-              title="Chat"
-            >
-              <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-              </svg>
-              {messages.length > 0 && !showChat && (
-                <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#8B5CF6] rounded-full border border-black/30" />
+          {/* Top-right: Mic · Cam · Flip */}
+          <div className="absolute top-3 right-3 z-10 flex gap-2">
+            <button onClick={toggleMute}
+              className="w-9 h-9 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+              style={{ background: isMuted ? '#ef4444' : 'rgba(0,0,0,0.5)' }}
+              title={isMuted ? 'Unmute' : 'Mute'}>
+              {isMuted ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                  <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6" />
+                  <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23" />
+                  <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
+                  <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
+                  <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
+                </svg>
               )}
             </button>
+
+            <button onClick={toggleCamera}
+              className="w-9 h-9 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+              style={{ background: isCameraOff ? '#ef4444' : 'rgba(0,0,0,0.5)' }}
+              title={isCameraOff ? 'Camera on' : 'Camera off'}>
+              {isCameraOff ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <line x1="1" y1="1" x2="23" y2="23" />
+                  <path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34" />
+                  <circle cx="12" cy="13" r="3" />
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M23 7l-7 5 7 5V7z" />
+                  <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                </svg>
+              )}
+            </button>
+
+            <button onClick={handleSwitchCamera}
+              className="w-9 h-9 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+              style={{ background: 'rgba(0,0,0,0.5)' }}
+              title="Flip camera">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M1 4v6h6" />
+                <path d="M23 20v-6h-6" />
+                <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10" />
+                <path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14" />
+              </svg>
+            </button>
           </div>
-        </div>}
-      </div>
 
-      {/* ═══════════════════════════════════════════════
-          DESKTOP ONLY: Your video PIP (bottom-right corner)
-          ═══════════════════════════════════════════════ */}
-      <div
-        className="hidden md:block absolute z-20"
-        style={{ bottom: 72, right: 20, width: 240, height: 170, borderRadius: 14, overflow: 'hidden', border: '2px solid rgba(255,255,255,0.2)', boxShadow: '0 8px 32px rgba(0,0,0,0.7)' }}
-      >
-        <VideoPlayer
-          stream={stream}
-          muted={true}
-          mirror={true}
-          className={`w-full h-full${localBlur ? ' blur-md' : ''}`}
-          videoStyle={{ filter: 'brightness(1.08) contrast(1.05) saturate(1.2)' }}
-        />
-        <div className="absolute top-2 left-2 z-10">
-          <span className="text-white text-xs font-semibold px-2 py-0.5 rounded-full"
-            style={{ background: 'rgba(0,0,0,0.6)' }}>You</span>
+          {/* Mobile bottom controls bar */}
+          {showControls && <div className="absolute bottom-0 left-0 right-0 z-10 safe-bottom"
+            style={{ background: 'rgba(0,0,0,0.65)' }}>
+            <div className="flex items-center gap-2 px-3 py-2.5">
+              <div className="flex-1 flex items-center gap-3 overflow-x-auto"
+                style={{ scrollbarWidth: 'none', WebkitOverflowScrolling: 'touch' }}>
+                {REACTIONS.map((emoji) => (
+                  <button key={emoji} onClick={() => sendMessage(emoji)}
+                    disabled={!isConnected}
+                    className="flex-none text-xl leading-none active:scale-90 transition-all disabled:opacity-30"
+                    title={`Send ${emoji}`}>
+                    {emoji}
+                  </button>
+                ))}
+              </div>
+              <button
+                onClick={() => setShowChat((v) => !v)}
+                className="relative flex-none w-11 h-11 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+                style={{ background: 'rgba(255,255,255,0.12)' }}
+                title="Chat"
+              >
+                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
+                </svg>
+                {messages.length > 0 && !showChat && (
+                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#8B5CF6] rounded-full border border-black/30" />
+                )}
+              </button>
+            </div>
+          </div>}
         </div>
-        <div className="absolute top-2 right-2 z-10 flex gap-1.5">
-          <button onClick={toggleMute}
-            className="w-7 h-7 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
-            style={{ background: isMuted ? '#ef4444' : 'rgba(0,0,0,0.7)', border: `1px solid ${isMuted ? '#ef4444' : 'rgba(255,255,255,0.2)'}` }}
-            title={isMuted ? 'Unmute' : 'Mute'}>
-            {isMuted ? (
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="1" y1="1" x2="23" y2="23" />
-                <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6" />
-                <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23" />
-                <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
-            ) : (
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z" />
-                <path d="M19 10v2a7 7 0 0 1-14 0v-2" />
-                <line x1="12" y1="19" x2="12" y2="23" /><line x1="8" y1="23" x2="16" y2="23" />
-              </svg>
-            )}
-          </button>
-          <button onClick={toggleCamera}
-            className="w-7 h-7 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
-            style={{ background: isCameraOff ? '#ef4444' : 'rgba(0,0,0,0.7)', border: `1px solid ${isCameraOff ? '#ef4444' : 'rgba(255,255,255,0.2)'}` }}
-            title={isCameraOff ? 'Camera on' : 'Camera off'}>
-            {isCameraOff ? (
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <line x1="1" y1="1" x2="23" y2="23" />
-                <path d="M21 21H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h3m3-3h6l2 3h4a2 2 0 0 1 2 2v9.34" />
-                <circle cx="12" cy="13" r="3" />
-              </svg>
-            ) : (
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M23 7l-7 5 7 5V7z" />
-                <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
-              </svg>
-            )}
-          </button>
-          <button onClick={handleSwitchCamera}
-            className="w-7 h-7 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
-            style={{ background: 'rgba(0,0,0,0.7)', border: '1px solid rgba(255,255,255,0.2)' }}
-            title="Flip camera">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 4v6h6" />
-              <path d="M23 20v-6h-6" />
-              <path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10" />
-              <path d="M3.51 15a9 9 0 0 0 14.85 3.36L23 14" />
-            </svg>
-          </button>
+
+        {/* Mobile chat bottom sheet */}
+        {showChat && (
+          <div className="fixed inset-0 z-40" style={{ background: 'rgba(0,0,0,0.5)' }}
+            onClick={() => setShowChat(false)} />
+        )}
+        <div className={`fixed inset-x-0 bottom-0 z-50 transition-transform duration-300 ease-out ${showChat ? 'translate-y-0' : 'translate-y-full'}`}
+          style={{ height: '42dvh' }}>
+          <div className="h-full flex flex-col rounded-t-2xl overflow-hidden"
+            style={{ background: 'rgba(18,18,18,0.97)', backdropFilter: 'blur(16px)', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="flex-shrink-0 flex items-center justify-center pt-2 pb-1">
+              <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.25)' }} />
+            </div>
+            <div className="flex-1 min-h-0">
+              <ChatPanel
+                messages={messages}
+                onSend={sendMessage}
+                disabled={!isConnected}
+                onShareSocials={handleShareSocials}
+                hasSocials={Object.values(settings.socials).some((v) => v.trim())}
+              />
+            </div>
+          </div>
         </div>
       </div>
 
-      {/* ═══════════════════════════════════════════════
-          DESKTOP ONLY: Bottom controls bar (overlay)
-          ═══════════════════════════════════════════════ */}
-      <div
-        className="hidden md:flex absolute bottom-0 left-0 right-0 z-10 safe-bottom items-center gap-2 px-4 py-2"
-        style={{ background: 'linear-gradient(to top, rgba(0,0,0,0.85) 60%, transparent 100%)' }}
-      >
-        {/* Skip / Next button */}
-        {isInChat && (
-          <button
-            onClick={skip}
-            className="flex-none px-4 py-1.5 rounded-full text-white text-xs font-semibold active:scale-95 transition-all"
-            style={{ background: 'rgba(239,68,68,0.75)', border: '1px solid rgba(239,68,68,0.5)' }}
-          >
-            NEXT
-          </button>
+      {/* ══════════════════ DESKTOP LAYOUT (hidden md:flex) ══════════════════ */}
+      <div className="hidden md:flex flex-col h-screen overflow-hidden relative">
+        <AnimatedBackground />
+
+        {postChatSessionId && features.postChatFeedback && (
+          <PostChatPanel sessionId={postChatSessionId} onClose={() => setPostChatSessionId(null)} onFindNext={handleFindNext} />
         )}
 
-        {/* Emoji reactions */}
-        <div className="flex-1 flex items-center gap-2 overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-          {REACTIONS.map((emoji) => (
-            <button key={emoji} onClick={() => sendMessage(emoji)}
-              disabled={!isConnected}
-              className="flex-none text-base leading-none active:scale-90 transition-all disabled:opacity-30"
-              title={`Send ${emoji}`}>
-              {emoji}
+        {/* Header */}
+        <div className="flex-shrink-0 relative z-10 flex items-center justify-between px-4 py-3"
+          style={{ background: 'rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
+          <img src="/logo.png" alt="Ame" className="h-8" />
+          <div className="flex items-center gap-3">
+            {isConnected && (
+              <span className="text-xs font-semibold" style={{ color: '#22c55e' }}>● Connected</span>
+            )}
+            <button
+              onClick={() => setShowSettings(true)}
+              className="w-9 h-9 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+              style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.15)' }}
+              title="Settings"
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="3" />
+                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+              </svg>
             </button>
-          ))}
+          </div>
         </div>
 
-        {/* Chat toggle */}
-        <button
-          onClick={() => setShowChat((v) => !v)}
-          className="relative flex-none w-9 h-9 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
-          style={{ background: 'rgba(255,255,255,0.12)' }}
-          title="Chat"
-        >
-          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
-          </svg>
-          {messages.length > 0 && !showChat && (
-            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-[#8B5CF6] rounded-full border border-black/30" />
-          )}
-        </button>
-      </div>
+        {/* Main area: video section + chat sidebar */}
+        <div className="flex-1 flex p-4 gap-4 min-h-0 overflow-hidden relative z-10">
 
-      {/* Chat bottom sheet */}
-      {showChat && (
-        <div className="fixed inset-0 z-40" style={{ background: 'rgba(0,0,0,0.5)' }}
-          onClick={() => setShowChat(false)} />
-      )}
-      <div className={`fixed inset-x-0 bottom-0 z-50 transition-transform duration-300 ease-out ${showChat ? 'translate-y-0' : 'translate-y-full'}`}
-        style={{ height: '42dvh' }}>
-        <div className="h-full flex flex-col rounded-t-2xl overflow-hidden"
-          style={{ background: 'rgba(18,18,18,0.97)', backdropFilter: 'blur(16px)', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-          <div className="flex-shrink-0 flex items-center justify-center pt-2 pb-1">
-            <div className="w-10 h-1 rounded-full" style={{ background: 'rgba(255,255,255,0.25)' }} />
+          {/* Video section */}
+          <div className="flex-1 flex flex-col gap-3 min-h-0">
+            <div className="flex-1 flex gap-3 min-h-0">
+
+              {/* Main video — stranger (large) */}
+              <div className="flex-1 relative min-h-0 rounded-2xl overflow-hidden"
+                style={{ border: '1px solid rgba(255,255,255,0.1)', boxShadow: '0 8px 32px rgba(0,0,0,0.5)' }}>
+                <VideoPlayer stream={remoteStream} muted={false} mirror={false} className="w-full h-full" />
+
+                {/* Stranger info */}
+                <div className="absolute bottom-3 left-3 z-10 flex flex-col gap-1.5 items-start">
+                  <div className="flex items-center gap-1.5">
+                    {flag && <span className="text-xl leading-none">{flag}</span>}
+                    <span className="text-white text-xs font-semibold px-3 py-1 rounded-full"
+                      style={{ background: 'rgba(0,0,0,0.6)' }}>
+                      {partnerCountry ? partnerCountry.toUpperCase() : 'Stranger'}
+                    </span>
+                  </div>
+                  {isInChat && commonInterests.length > 0 && (
+                    <div className="flex gap-1 flex-wrap">
+                      {commonInterests.map((tag) => (
+                        <span key={tag} className="text-xs px-2 py-0.5 rounded-full text-white"
+                          style={{ background: 'rgba(139,92,246,0.65)', border: '1px solid rgba(139,92,246,0.4)' }}>
+                          #{tag}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* AI overlays */}
+                {features.aiWarmup && warmUp && isConnected && (
+                  <WarmUpCard warmUp={warmUp} onDismiss={dismissWarmUp} />
+                )}
+                {features.aiCohost && whisper && isConnected && (
+                  <CoHostWhisper prompt={whisper} onDismiss={dismissWhisper} />
+                )}
+              </div>
+
+              {/* PiP — your video (expandable) */}
+              <div
+                className={`relative flex-shrink-0 transition-all duration-300 rounded-2xl overflow-hidden ${localExpanded ? 'w-72' : 'w-44'}`}
+                style={{ border: '1px solid rgba(255,255,255,0.15)', boxShadow: '0 4px 20px rgba(0,0,0,0.5)' }}
+              >
+                <VideoPlayer
+                  stream={stream}
+                  muted={true}
+                  mirror={true}
+                  className={`w-full h-full${localBlur ? ' blur-md' : ''}`}
+                  videoStyle={{ filter: 'brightness(1.08) contrast(1.05) saturate(1.2)' }}
+                />
+                <div className="absolute top-2 left-2 z-10">
+                  <span className="text-white text-xs font-semibold px-2 py-0.5 rounded-full"
+                    style={{ background: 'rgba(0,0,0,0.6)' }}>You</span>
+                </div>
+                <button
+                  onClick={() => setLocalExpanded((v) => !v)}
+                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+                  style={{ background: 'rgba(0,0,0,0.6)' }}
+                  title={localExpanded ? 'Collapse' : 'Expand'}
+                >
+                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    {localExpanded
+                      ? <><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></>
+                      : <><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" /></>}
+                  </svg>
+                </button>
+              </div>
+            </div>
           </div>
-          <div className="flex-1 min-h-0">
+
+          {/* Chat sidebar */}
+          <div className="w-80 flex-shrink-0 h-full">
             <ChatPanel
               messages={messages}
               onSend={sendMessage}
@@ -778,9 +774,25 @@ export default function ChatPage() {
             />
           </div>
         </div>
+
+        {/* Bottom controls bar */}
+        <div className="flex-shrink-0 relative z-10 px-4 pb-4">
+          <ChatControls
+            connectionState={connectionState}
+            isMuted={isMuted}
+            isCameraOff={isCameraOff}
+            onToggleMute={toggleMute}
+            onToggleCamera={toggleCamera}
+            onSwitchCamera={handleSwitchCamera}
+            onSkip={skip}
+            onEndChat={endChat}
+            onReport={() => setShowReport(true)}
+            onJoinQueue={handleJoinQueue}
+          />
+        </div>
       </div>
 
-      {/* Modals */}
+      {/* Shared modals */}
       {showReport && <ReportModal socket={socket} onClose={() => setShowReport(false)} />}
       {showSettings && (
         <SettingsPanel
@@ -790,6 +802,6 @@ export default function ChatPage() {
           onLogout={() => { logout(); navigate('/login', { replace: true }); }}
         />
       )}
-    </div>
+    </>
   );
 }
