@@ -234,7 +234,6 @@ router.get('/facebook/start', (req: Request, res: Response) => {
     scope: 'public_profile',
     response_type: 'code',
     state: isMobile ? 'ame_oauth_mobile' : 'ame_oauth',
-    auth_type: 'rerequest',  // force fresh consent dialog, bypass stuck "previously logged in" spinner
   });
   res.redirect(`https://www.facebook.com/v21.0/dialog/oauth?${params}`);
 });
