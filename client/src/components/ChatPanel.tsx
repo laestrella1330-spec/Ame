@@ -176,7 +176,7 @@ export default function ChatPanel({ messages, onSend, disabled, onShareSocials, 
             onKeyDown={handleKeyDown}
             placeholder={disabled ? 'Not connected' : 'Type a message...'}
             disabled={disabled}
-            className="flex-1 px-3 py-2 bg-white/5 text-white text-sm rounded-lg border border-white/10 focus:border-violet-500 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed placeholder-slate-500"
+            className="flex-1 min-w-0 px-3 py-2 bg-white/5 text-white text-sm rounded-lg border border-white/10 focus:border-violet-500 focus:outline-none disabled:opacity-40 disabled:cursor-not-allowed placeholder-slate-500"
           />
           <button
             onClick={handleSend}
