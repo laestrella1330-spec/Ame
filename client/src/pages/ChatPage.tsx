@@ -310,7 +310,7 @@ export default function ChatPage() {
 
         {/* ── Logo ── */}
         <div className="flex flex-col items-center animate-float" style={{ marginBottom: 16, position: 'relative', zIndex: 1 }}>
-          <img src="/logo.png" alt="AME" style={{ width: 180, height: 'auto', marginBottom: 8, filter: 'drop-shadow(0 0 24px rgba(139,92,246,0.55))' }} />
+          <img src="/logo.png" alt="AME" style={{ width: 90, height: 'auto', marginBottom: 8, filter: 'drop-shadow(0 0 24px rgba(139,92,246,0.55))' }} />
           <p className="neon-text" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 14, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '0.1em', textShadow: '0 0 16px rgba(139,92,246,1), 0 0 32px rgba(139,92,246,0.5)' }}>
             Connect with the World
           </p>
