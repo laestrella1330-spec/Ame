@@ -671,7 +671,7 @@ export default function ChatPage() {
         {/* Header */}
         <div className="flex-shrink-0 relative z-10 flex items-center justify-between px-4 py-3"
           style={{ background: 'rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
-          <img src="/logo.png" alt="Ame" className="h-20" />
+          <img src="/logo.png" alt="Ame" className="h-32" />
           <div className="flex items-center gap-3">
             {isConnected && (
               <span className="text-xs font-semibold" style={{ color: '#22c55e' }}>● Connected</span>
@@ -773,7 +773,7 @@ export default function ChatPage() {
           </div>
 
           {/* Chat sidebar */}
-          <div className="w-96 flex-shrink-0 h-full">
+          <div className="w-72 flex-shrink-0 h-full">
             <ChatPanel
               messages={messages}
               onSend={sendMessage}
