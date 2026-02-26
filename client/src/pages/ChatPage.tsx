@@ -310,7 +310,7 @@ export default function ChatPage() {
 
         {/* ── Logo ── */}
         <div className="flex flex-col items-center animate-float" style={{ marginBottom: 16, position: 'relative', zIndex: 1 }}>
-          <img src="/logo.png" alt="AME" style={{ width: 90, height: 'auto', marginBottom: 8, filter: 'drop-shadow(0 0 24px rgba(139,92,246,0.55))' }} />
+          <img src="/logo.png" alt="AME" style={{ width: 180, height: 'auto', marginBottom: 8, filter: 'drop-shadow(0 0 24px rgba(139,92,246,0.55))' }} />
           <p className="neon-text" style={{ fontFamily: "'Orbitron', sans-serif", fontSize: 14, fontWeight: 700, color: '#fff', margin: 0, letterSpacing: '0.1em', textShadow: '0 0 16px rgba(139,92,246,1), 0 0 32px rgba(139,92,246,0.5)' }}>
             Connect with the World
           </p>
@@ -671,7 +671,7 @@ export default function ChatPage() {
         {/* Header */}
         <div className="flex-shrink-0 relative z-10 flex items-center justify-between px-4 py-3"
           style={{ background: 'rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
-          <img src="/logo.png" alt="Ame" className="h-16" />
+          <img src="/logo.png" alt="Ame" className="h-20" />
           <div className="flex items-center gap-3">
             {isConnected && (
               <span className="text-xs font-semibold" style={{ color: '#22c55e' }}>● Connected</span>
@@ -773,7 +773,7 @@ export default function ChatPage() {
           </div>
 
           {/* Chat sidebar */}
-          <div className="w-80 flex-shrink-0 h-full">
+          <div className="w-96 flex-shrink-0 h-full">
             <ChatPanel
               messages={messages}
               onSend={sendMessage}

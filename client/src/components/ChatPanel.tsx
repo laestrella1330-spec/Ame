@@ -147,7 +147,7 @@ export default function ChatPanel({ messages, onSend, disabled, onShareSocials, 
       )}
 
       {/* Input */}
-      <div className="relative z-10 p-3 border-t border-white/10">
+      <div className="relative z-10 py-3 px-4 border-t border-white/10">
         <div className="flex gap-2">
           <button
             onClick={() => setShowEmojis((v) => !v)}
