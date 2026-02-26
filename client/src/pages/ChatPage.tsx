@@ -671,7 +671,7 @@ export default function ChatPage() {
         {/* Header */}
         <div className="flex-shrink-0 relative z-10 flex items-center justify-between px-4 py-3"
           style={{ background: 'rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.08)', backdropFilter: 'blur(12px)' }}>
-          <img src="/logo.png" alt="Ame" className="h-8" />
+          <img src="/logo.png" alt="Ame" className="h-12" />
           <div className="flex items-center gap-3">
             {isConnected && (
               <span className="text-xs font-semibold" style={{ color: '#22c55e' }}>● Connected</span>
@@ -756,23 +756,10 @@ export default function ChatPage() {
                     {swapped ? 'Stranger' : 'You'}
                   </span>
                 </div>
-                {/* Expand / collapse */}
-                <button
-                  onClick={() => setLocalExpanded((v) => !v)}
-                  className="absolute top-2 right-2 z-10 w-6 h-6 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
-                  style={{ background: 'rgba(0,0,0,0.6)' }}
-                  title={localExpanded ? 'Collapse' : 'Expand'}
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-                    {localExpanded
-                      ? <><path d="M15 3h6v6M9 21H3v-6M21 3l-7 7M3 21l7-7" /></>
-                      : <><path d="M8 3H3v5M16 3h5v5M3 16v5h5M21 16v5h-5" /></>}
-                  </svg>
-                </button>
-                {/* Swap arrow */}
+                {/* Swap arrow — top-right */}
                 <button
                   onClick={() => setSwapped((v) => !v)}
-                  className="absolute bottom-2 left-1/2 -translate-x-1/2 z-10 w-7 h-7 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
+                  className="absolute top-2 right-2 z-10 w-7 h-7 flex items-center justify-center rounded-full text-white active:scale-90 transition-all"
                   style={{ background: 'rgba(0,0,0,0.6)' }}
                   title="Swap videos"
                 >

@@ -87,6 +87,21 @@ export default function ChatControls({
           )}
         </button>
 
+        {/* End call (only when in chat) */}
+        {isInChat && (
+          <button
+            onClick={onEndChat}
+            className={`${circleBtn} bg-red-500 shadow-lg shadow-red-500/40`}
+            style={{ width: 52, height: 52 }}
+            title="End call"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M10.68 13.31a16 16 0 0 0 3.41 2.6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7 2 2 0 0 1 1.72 2v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07A19.42 19.42 0 0 1 4.43 13a19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 3.34 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L7.32 9.9a16 16 0 0 0 3.36 3.41z" />
+              <line x1="23" y1="1" x2="1" y2="23" />
+            </svg>
+          </button>
+        )}
+
       </div>
 
       {/* ── Right: action buttons ── */}
