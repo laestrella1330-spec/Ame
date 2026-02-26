@@ -17,6 +17,7 @@ import { Server, Socket } from 'socket.io';
 import jwt from 'jsonwebtoken';
 import { z } from 'zod';
 import { config } from '../config.js';
+import { execute } from '../db/connection.js';
 import { Matchmaker, type JoinPreferences } from './matchmaker.js';
 import { getActiveUserBan } from '../services/banService.js';
 import { logAudit } from '../services/auditService.js';
@@ -87,15 +88,37 @@ const adminMonitoring = new Map<string, Set<string>>();
 // Maps userId → Set of socket IDs currently connected
 const userIdToSockets = new Map<string, Set<string>>();
 let ioInstance: Server | null = null;
+let matchmakerInstance: Matchmaker | null = null;
 
-/** Force-disconnect all sockets belonging to a user (called when user is banned). */
-export function kickUser(userId: string): void {
+/** Returns currently active sessions from in-memory matchmaker state (authoritative). */
+export function getActiveSessions(): Array<{ id: string; user_a_id: string; user_b_id: string; started_at: string }> {
+  if (!matchmakerInstance) return [];
+  return matchmakerInstance.getAllActiveSessions().map((m) => ({
+    id: m.sessionId,
+    user_a_id: m.userA,
+    user_b_id: m.userB,
+    started_at: (m as { startedAt?: string }).startedAt ?? new Date().toISOString(),
+  }));
+}
+
+/**
+ * Force-disconnect all sockets belonging to a user (called when user is banned).
+ * Includes the ban reason and expiry so the client can show a proper notification.
+ */
+export function kickUser(userId: string, reason?: string, expiresAt?: string): void {
   const socketIds = userIdToSockets.get(userId);
   if (!socketIds || !ioInstance) return;
+  const remainingDays = expiresAt
+    ? Math.max(1, Math.ceil((new Date(expiresAt).getTime() - Date.now()) / 86400000))
+    : undefined;
   for (const socketId of Array.from(socketIds)) {
     const socket = ioInstance.sockets.sockets.get(socketId);
     if (socket) {
-      socket.emit('banned', { reason: 'Your account has been suspended.' });
+      socket.emit('banned', {
+        reason: reason ?? 'Your account has been suspended.',
+        expiresAt,
+        remainingDays,
+      });
       socket.disconnect(true);
     }
   }
@@ -104,6 +127,15 @@ export function kickUser(userId: string): void {
 export function setupSocketHandlers(io: Server): Matchmaker {
   ioInstance = io;
   const matchmaker = new Matchmaker(io);
+  matchmakerInstance = matchmaker;
+
+  // On startup: mark any sessions left open from a previous server run as ended.
+  // The in-memory activeMatches is empty on boot, so DB-only open sessions are stale.
+  execute(
+    `UPDATE sessions SET ended_at = datetime('now'), end_reason = 'server_restart'
+     WHERE ended_at IS NULL`,
+    []
+  );
 
   // ── Auth middleware ──────────────────────────────────────────────────────────
   io.use((socket, next) => {

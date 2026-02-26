@@ -33,8 +33,17 @@ export default function LoginPage() {
   const [devOtpNote, setDevOtpNote] = useState(false);
   const [devOtpCode, setDevOtpCode] = useState('');
 
-  // Hash-based error from Facebook redirect
+  // Hash-based error from Facebook redirect OR socket ban redirect
   useEffect(() => {
+    // Socket/API ban: useSocket stores these before navigating here
+    const socketBanReason = sessionStorage.getItem('banned_reason');
+    if (socketBanReason) {
+      setBanInfo({ reason: socketBanReason, days: sessionStorage.getItem('banned_days') ?? '0' });
+      sessionStorage.removeItem('banned_reason');
+      sessionStorage.removeItem('banned_days');
+      return;
+    }
+
     const hash = window.location.hash;
     if (hash.includes('auth-error=banned')) {
       const reason = sessionStorage.getItem('banned_reason') ?? 'TOS violation';

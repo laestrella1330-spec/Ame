@@ -211,11 +211,11 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
       setPartnerCountry(null);
     };
 
-    const handleBanned = (data: { reason: string }) => {
+    const handleBanned = () => {
       cleanup();
       setConnectionState('idle');
       setSessionId(null);
-      alert(data.reason);
+      // useSocket handles the ban notification and redirect
     };
 
     socket.on('matched', handleMatched);

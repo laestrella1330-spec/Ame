@@ -26,7 +26,7 @@ import {
 import { logAudit } from '../services/auditService.js';
 import { queryOne, queryAll, execute } from '../db/connection.js';
 import type { UserConsent } from '../types/index.js';
-import { kickUser } from '../signaling/socketHandler.js';
+import { kickUser, getActiveSessions } from '../signaling/socketHandler.js';
 
 const router = Router();
 
@@ -102,13 +102,11 @@ router.get('/', authMiddleware, (req: AuthRequest, res: Response) => {
 });
 
 // ── GET /api/users/active-sessions (admin) ────────────────────────────────────
+// Returns in-memory active sessions from the matchmaker (authoritative).
+// The DB query was unreliable — stale rows with ended_at IS NULL persisted
+// across server restarts. In-memory state is always current.
 router.get('/active-sessions', authMiddleware, (_req: AuthRequest, res: Response) => {
-  const sessions = queryAll<{
-    id: string;
-    user_a_id: string;
-    user_b_id: string | null;
-    started_at: string;
-  }>(`SELECT id, user_a_id, user_b_id, started_at FROM sessions WHERE ended_at IS NULL ORDER BY started_at DESC`);
+  const sessions = getActiveSessions();
   res.json({ sessions, count: sessions.length });
 });
 
@@ -155,8 +153,9 @@ router.post('/:id/ban', authMiddleware, (req: AuthRequest, res: Response) => {
     durationDays: ban.duration_days,
   }, getIp(req));
 
-  // Immediately disconnect any active sockets belonging to this user
-  kickUser(userId);
+  // Immediately disconnect any active sockets and send full ban details
+  // so the client can show the user the reason and duration.
+  kickUser(userId, ban.reason ?? undefined, ban.expires_at);
 
   res.status(201).json(ban);
 });

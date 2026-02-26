@@ -18,15 +18,24 @@ export function useSocket() {
     socket.on('disconnect', () => setIsConnected(false));
 
     // Server force-banned this user mid-session
-    socket.on('banned', () => {
+    socket.on('banned', (data?: { reason?: string; expiresAt?: string; remainingDays?: number }) => {
+      if (data?.reason) {
+        sessionStorage.setItem('banned_reason', data.reason);
+        sessionStorage.setItem('banned_days', String(data.remainingDays ?? 0));
+      }
       disconnectSocket();
       logout();
       navigate('/login', { replace: true });
     });
 
-    // Server rejected connection because user is banned
-    socket.on('connect_error', (err: Error) => {
+    // Server rejected connection because user is banned (socket handshake)
+    socket.on('connect_error', (err: Error & { data?: { reason?: string; remainingDays?: number } }) => {
       if (err.message === 'account_banned') {
+        const d = err.data;
+        if (d?.reason) {
+          sessionStorage.setItem('banned_reason', d.reason);
+          sessionStorage.setItem('banned_days', String(d.remainingDays ?? 0));
+        }
         logout();
         navigate('/login', { replace: true });
       }
