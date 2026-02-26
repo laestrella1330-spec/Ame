@@ -36,6 +36,9 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
   const [commonInterests, setCommonInterests] = useState<string[]>([]);
   const [partnerCountry, setPartnerCountry] = useState<string | null>(null);
 
+  // Buffer ICE candidates that arrive before remote description is set
+  const iceCandidateBufferRef = useRef<RTCIceCandidateInit[]>([]);
+
   // Shadow peer connection for admin monitoring (one-way: user→admin)
   const adminPcRef = useRef<RTCPeerConnection | null>(null);
   const adminSocketIdRef = useRef<string | null>(null);
@@ -44,6 +47,7 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
   useEffect(() => { localStreamRef.current = localStream; }, [localStream]);
 
   const cleanup = useCallback(() => {
+    iceCandidateBufferRef.current = [];
     if (pcRef.current) {
       pcRef.current.close();
       pcRef.current = null;
@@ -59,6 +63,7 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
   const createPeerConnection = useCallback(
     (iceServers: RTCIceServer[]) => {
       cleanup();
+      iceCandidateBufferRef.current = [];
 
       const pc = new RTCPeerConnection({ iceServers });
 
@@ -69,13 +74,30 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
       };
 
       pc.ontrack = (event) => {
-        setRemoteStream(event.streams[0]);
+        if (event.streams && event.streams[0]) {
+          setRemoteStream(event.streams[0]);
+        } else {
+          // Fallback for browsers that don't include streams in the event
+          setRemoteStream((prev) => {
+            const s = prev ?? new MediaStream();
+            s.addTrack(event.track);
+            return new MediaStream(s.getTracks());
+          });
+        }
         setConnectionState('connected');
       };
 
       pc.onconnectionstatechange = () => {
         if (pc.connectionState === 'disconnected' || pc.connectionState === 'failed') {
           setConnectionState('disconnected');
+        }
+      };
+
+      // Monitor ICE-layer connectivity — restart ICE on failure so video recovers
+      // without requiring the user to manually skip/reconnect.
+      pc.oniceconnectionstatechange = () => {
+        if (pc.iceConnectionState === 'failed') {
+          pc.restartIce();
         }
       };
 
@@ -91,6 +113,16 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
     },
     [socket, localStream, cleanup]
   );
+
+  // Flush ICE candidates that were buffered before remote description was set
+  const flushIceCandidates = useCallback(async (pc: RTCPeerConnection) => {
+    const buffered = iceCandidateBufferRef.current.splice(0);
+    for (const candidate of buffered) {
+      try {
+        await pc.addIceCandidate(new RTCIceCandidate(candidate));
+      } catch { /* ignore stale */ }
+    }
+  }, []);
 
   const joinQueue = useCallback((prefs?: JoinPrefs) => {
     if (!socket) return;
@@ -142,6 +174,8 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
       const pc = pcRef.current;
       if (!pc) return;
       await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      // Flush any candidates that arrived before this remote description
+      await flushIceCandidates(pc);
       const answer = await pc.createAnswer();
       await pc.setLocalDescription(answer);
       socket.emit('answer', { sdp: pc.localDescription });
@@ -151,16 +185,22 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
       const pc = pcRef.current;
       if (!pc) return;
       await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
+      // Flush any candidates that arrived before this remote description
+      await flushIceCandidates(pc);
     };
 
     const handleIceCandidate = async (data: { candidate: RTCIceCandidateInit }) => {
       const pc = pcRef.current;
       if (!pc) return;
+      // Buffer candidates that arrive before remote description is set to avoid
+      // silent drops that leave the connection stuck in "connecting" state.
+      if (!pc.remoteDescription) {
+        iceCandidateBufferRef.current.push(data.candidate);
+        return;
+      }
       try {
         await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
-      } catch {
-        // Candidate may arrive before remote description is set
-      }
+      } catch { /* ignore stale candidates */ }
     };
 
     const handlePeerDisconnected = () => {
@@ -193,7 +233,7 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
       socket.off('peer-disconnected', handlePeerDisconnected);
       socket.off('banned', handleBanned);
     };
-  }, [socket, createPeerConnection, cleanup]);
+  }, [socket, createPeerConnection, cleanup, flushIceCandidates]);
 
   // ── Admin monitoring: respond to admin's recvonly offer with local video ──────
   // Admin sends an offer (recvonly), user answers with their live stream (sendonly).

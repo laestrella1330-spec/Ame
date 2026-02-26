@@ -13,8 +13,13 @@ export default function VideoPlayer({ stream, muted = false, className = '', lab
   const videoRef = useRef<HTMLVideoElement>(null);
 
   useEffect(() => {
-    if (videoRef.current) {
-      videoRef.current.srcObject = stream;
+    const video = videoRef.current;
+    if (!video) return;
+    video.srcObject = stream;
+    if (stream) {
+      video.play().catch(() => {
+        // Autoplay blocked by browser policy — video will play on first user interaction
+      });
     }
   }, [stream]);
 
