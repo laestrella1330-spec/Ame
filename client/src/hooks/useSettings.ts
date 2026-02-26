@@ -65,6 +65,7 @@ export function useSettings() {
       const next = { ...prev, ...patch };
       try {
         localStorage.setItem('ame_settings', JSON.stringify(next));
+        window.dispatchEvent(new CustomEvent('ame-settings-update', { detail: next }));
       } catch {
         // ignore
       }

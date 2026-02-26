@@ -181,9 +181,13 @@ export default function ChatPanel({ messages, onSend, disabled, onShareSocials, 
           <button
             onClick={handleSend}
             disabled={disabled || !input.trim()}
-            className="px-3 py-2 btn-gradient text-white rounded-lg text-sm font-medium disabled:opacity-40 disabled:cursor-not-allowed"
+            className="flex-none w-9 h-9 flex items-center justify-center btn-gradient text-white rounded-lg disabled:opacity-40 disabled:cursor-not-allowed active:scale-90 transition-all"
+            title="Send"
           >
-            Send
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="22" y1="2" x2="11" y2="13" />
+              <polygon points="22 2 15 22 11 13 2 9 22 2" />
+            </svg>
           </button>
         </div>
       </div>
