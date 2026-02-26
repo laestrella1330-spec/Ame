@@ -12,15 +12,46 @@ interface VideoPlayerProps {
 export default function VideoPlayer({ stream, muted = false, className = '', label, mirror = false, videoStyle }: VideoPlayerProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
 
+  // Attach stream and play — also syncs muted imperatively because React's
+  // reconciler doesn't reliably update the muted DOM attribute on <video>.
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
+    video.muted = muted;
     video.srcObject = stream;
     if (stream) {
       video.play().catch(() => {
-        // Autoplay blocked by browser policy — video will play on first user interaction
+        // Autoplay blocked — will play on first user interaction
       });
     }
+  }, [stream, muted]);
+
+  // Mobile resilience: iOS/Android pause video elements when the app is
+  // backgrounded or the screen locks. Resume playback when the page becomes
+  // visible again, and when tracks unmute after being suspended by the OS.
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video || !stream) return;
+
+    const tryPlay = () => {
+      if (video.paused) {
+        video.play().catch(() => {});
+      }
+    };
+
+    // Fires when user returns to the tab/app from background
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') tryPlay();
+    };
+    document.addEventListener('visibilitychange', onVisibilityChange);
+
+    // Fires when the OS re-enables a track that was muted during backgrounding
+    stream.getTracks().forEach((track) => track.addEventListener('unmute', tryPlay));
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisibilityChange);
+      stream.getTracks().forEach((track) => track.removeEventListener('unmute', tryPlay));
+    };
   }, [stream]);
 
   const computedVideoStyle: React.CSSProperties = {

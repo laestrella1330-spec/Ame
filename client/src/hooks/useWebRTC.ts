@@ -235,6 +235,25 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
     };
   }, [socket, createPeerConnection, cleanup, flushIceCandidates]);
 
+  // ── Mobile resilience: restart ICE when app returns from background ──────────
+  // On iOS/Android the network path changes when the screen locks or the app is
+  // backgrounded, causing the ICE connection to go stale. Calling restartIce()
+  // on visibility:visible triggers fresh candidate gathering over the existing
+  // signalling channel so the call recovers without user intervention.
+  useEffect(() => {
+    const handleVisibility = () => {
+      if (document.visibilityState !== 'visible') return;
+      const pc = pcRef.current;
+      if (!pc) return;
+      const { iceConnectionState } = pc;
+      if (iceConnectionState === 'disconnected' || iceConnectionState === 'failed') {
+        pc.restartIce();
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => document.removeEventListener('visibilitychange', handleVisibility);
+  }, []);
+
   // ── Admin monitoring: respond to admin's recvonly offer with local video ──────
   // Admin sends an offer (recvonly), user answers with their live stream (sendonly).
   useEffect(() => {
