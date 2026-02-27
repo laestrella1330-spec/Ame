@@ -39,9 +39,6 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
   // Buffer ICE candidates that arrive before remote description is set
   const iceCandidateBufferRef = useRef<RTCIceCandidateInit[]>([]);
 
-  // Auto-requeue timeout: if WebRTC doesn't connect within 12s, skip/requeue both peers
-  const connectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
   // Shadow peer connection for admin monitoring (one-way: user→admin)
   const adminPcRef = useRef<RTCPeerConnection | null>(null);
   const adminSocketIdRef = useRef<string | null>(null);
@@ -50,10 +47,6 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
   useEffect(() => { localStreamRef.current = localStream; }, [localStream]);
 
   const cleanup = useCallback(() => {
-    if (connectTimeoutRef.current) {
-      clearTimeout(connectTimeoutRef.current);
-      connectTimeoutRef.current = null;
-    }
     iceCandidateBufferRef.current = [];
     if (pcRef.current) {
       pcRef.current.close();
@@ -81,11 +74,6 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
       };
 
       pc.ontrack = (event) => {
-        // WebRTC succeeded — cancel the auto-requeue timeout
-        if (connectTimeoutRef.current) {
-          clearTimeout(connectTimeoutRef.current);
-          connectTimeoutRef.current = null;
-        }
         if (event.streams && event.streams[0]) {
           setRemoteStream(event.streams[0]);
         } else {
@@ -175,19 +163,6 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
 
       const pc = createPeerConnection(data.iceServers);
 
-      // If WebRTC hasn't established within 12s, skip to requeue both peers.
-      // This prevents users from being stuck in "connecting" when ICE fails.
-      if (connectTimeoutRef.current) clearTimeout(connectTimeoutRef.current);
-      connectTimeoutRef.current = setTimeout(() => {
-        connectTimeoutRef.current = null;
-        const currentPc = pcRef.current;
-        if (!currentPc || currentPc.connectionState !== 'connected') {
-          cleanup();
-          socket.emit('skip');
-          setConnectionState('searching');
-        }
-      }, 12000);
-
       if (data.isInitiator) {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
@@ -251,10 +226,6 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
     socket.on('banned', handleBanned);
 
     return () => {
-      if (connectTimeoutRef.current) {
-        clearTimeout(connectTimeoutRef.current);
-        connectTimeoutRef.current = null;
-      }
       socket.off('matched', handleMatched);
       socket.off('offer', handleOffer);
       socket.off('answer', handleAnswer);
