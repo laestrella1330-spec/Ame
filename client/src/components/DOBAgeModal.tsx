@@ -39,7 +39,7 @@ export default function DOBAgeModal({ onVerified }: Props) {
   if (location.pathname.startsWith('/admin')) return null;
 
   const sel: CSSProperties = {
-    background: 'rgba(139,92,246,0.10)',
+    background: '#1a0d3a',
     color: 'white',
     border: '1px solid rgba(139,92,246,0.35)',
     borderRadius: 10,
@@ -52,6 +52,7 @@ export default function DOBAgeModal({ onVerified }: Props) {
     appearance: 'none',
     WebkitAppearance: 'none',
   };
+  const optStyle: CSSProperties = { background: '#1a0d3a', color: 'white' };
 
   const handleConfirm = () => {
     setError('');
@@ -133,23 +134,23 @@ export default function DOBAgeModal({ onVerified }: Props) {
           {/* DOB selects */}
           <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr 1.5fr', gap: 8, marginBottom: 14 }}>
             <select value={month} onChange={(e) => setMonth(e.target.value)} style={sel}>
-              <option value="">Month</option>
+              <option value="" style={optStyle}>Month</option>
               {MONTHS.map((m, i) => (
-                <option key={m} value={String(i + 1)}>{m}</option>
+                <option key={m} value={String(i + 1)} style={optStyle}>{m}</option>
               ))}
             </select>
 
             <select value={day} onChange={(e) => setDay(e.target.value)} style={sel}>
-              <option value="">Day</option>
+              <option value="" style={optStyle}>Day</option>
               {Array.from({ length: 31 }, (_, i) => i + 1).map((d) => (
-                <option key={d} value={String(d)}>{d}</option>
+                <option key={d} value={String(d)} style={optStyle}>{d}</option>
               ))}
             </select>
 
             <select value={year} onChange={(e) => setYear(e.target.value)} style={sel}>
-              <option value="">Year</option>
+              <option value="" style={optStyle}>Year</option>
               {Array.from({ length: 100 }, (_, i) => new Date().getFullYear() - i).map((y) => (
-                <option key={y} value={String(y)}>{y}</option>
+                <option key={y} value={String(y)} style={optStyle}>{y}</option>
               ))}
             </select>
           </div>
