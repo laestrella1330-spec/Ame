@@ -439,7 +439,7 @@ export default function ChatPage() {
         {showSettings && (
           <SettingsPanel settings={settings} onUpdate={updateSettings}
             onClose={() => setShowSettings(false)}
-            onLogout={() => { logout(); navigate('/login', { replace: true }); }} />
+            onLogout={() => { logout(); navigate('/', { replace: true }); }} />
         )}
 
         {/* Camera permission rationale — must live here too since standby returns early */}
@@ -834,7 +834,7 @@ export default function ChatPage() {
           settings={settings}
           onUpdate={updateSettings}
           onClose={() => setShowSettings(false)}
-          onLogout={() => { logout(); navigate('/login', { replace: true }); }}
+          onLogout={() => { logout(); navigate('/', { replace: true }); }}
         />
       )}
     </>
