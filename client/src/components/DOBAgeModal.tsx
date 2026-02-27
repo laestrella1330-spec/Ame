@@ -7,6 +7,7 @@
  * Skipped on /admin/* routes so admin logins are not affected.
  */
 import { useState } from 'react';
+import type { CSSProperties } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
 const MONTHS = [
@@ -37,7 +38,7 @@ export default function DOBAgeModal({ onVerified }: Props) {
   // Skip for admin routes
   if (location.pathname.startsWith('/admin')) return null;
 
-  const sel: React.CSSProperties = {
+  const sel: CSSProperties = {
     background: 'rgba(139,92,246,0.10)',
     color: 'white',
     border: '1px solid rgba(139,92,246,0.35)',
@@ -197,7 +198,7 @@ export default function DOBAgeModal({ onVerified }: Props) {
 }
 
 // ── Shared styles ─────────────────────────────────────────────────────────────
-const OVERLAY: React.CSSProperties = {
+const OVERLAY: CSSProperties = {
   position: 'fixed',
   inset: 0,
   zIndex: 9999,
@@ -214,7 +215,7 @@ const OVERLAY: React.CSSProperties = {
   padding: '32px 0',
 };
 
-const CARD: React.CSSProperties = {
+const CARD: CSSProperties = {
   background: 'rgba(255,255,255,0.03)',
   backdropFilter: 'blur(14px)',
   border: '1px solid rgba(139,92,246,0.3)',
