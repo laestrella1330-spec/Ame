@@ -27,6 +27,8 @@ export class Matchmaker {
   private queue: Map<string, QueueEntry> = new Map();
   private activeMatches: Map<string, ActiveMatch> = new Map();
   private socketToSession: Map<string, string> = new Map();
+  // Last-known join preferences per userId — used to re-queue after skip
+  private userPrefs: Map<string, JoinPreferences> = new Map();
   private io: Server;
   private matchRetryInterval: ReturnType<typeof setInterval> | null = null;
 
@@ -35,7 +37,7 @@ export class Matchmaker {
     // Periodically retry for users whose filters haven't been satisfied
     this.matchRetryInterval = setInterval(() => {
       if (this.queue.size >= 2) this.attemptMatch();
-    }, 5000);
+    }, 2000);
   }
 
   getClientIp(socket: Socket): string {
@@ -68,6 +70,11 @@ export class Matchmaker {
     }
 
     this.removeFromSession(socket.id, 'requeue');
+
+    // Persist prefs so skip can re-queue with the same filters
+    if (prefs && Object.keys(prefs).length > 0) {
+      this.userPrefs.set(userId, prefs);
+    }
 
     this.queue.set(socket.id, {
       socketId: socket.id,
@@ -153,24 +160,40 @@ export class Matchmaker {
 
     const entries = Array.from(this.queue.values());
     const now = Date.now();
-    const entryA = entries[0];
-    const forceMatch = now - entryA.joinedAt.getTime() > 15000;
 
-    let bestMatch: QueueEntry | null = null;
+    // O(n²) global pair scan — finds the best compatible pair in the whole queue,
+    // not just the best partner for entries[0]. This prevents compatible users
+    // from being blocked by an incompatible user at the front of the queue.
+    let bestA: QueueEntry | null = null;
+    let bestB: QueueEntry | null = null;
     let bestScore = -Infinity;
 
-    for (let i = 1; i < entries.length; i++) {
-      const candidate = entries[i];
-      // Don't match a user with themselves across tabs
-      if (candidate.userId === entryA.userId) continue;
-      if (!forceMatch && !this.isCompatible(entryA, candidate)) continue;
-      const score = this.compatibilityScore(entryA, candidate);
-      if (score > bestScore) { bestScore = score; bestMatch = candidate; }
+    for (let i = 0; i < entries.length - 1; i++) {
+      for (let j = i + 1; j < entries.length; j++) {
+        const a = entries[i];
+        const b = entries[j];
+        // Never match a user with themselves across multiple tabs
+        if (a.userId === b.userId) continue;
+
+        const waitA = now - a.joinedAt.getTime();
+        const waitB = now - b.joinedAt.getTime();
+        // Force-match if either user has been waiting > 15 seconds
+        const forceMatch = waitA > 15000 || waitB > 15000;
+
+        if (!forceMatch && !this.isCompatible(a, b)) continue;
+
+        // Score = compatibility + wait-time bias (reward older waiters, +1 per 5s, max +6 each)
+        const score = this.compatibilityScore(a, b)
+          + Math.min(Math.floor(waitA / 5000), 6)
+          + Math.min(Math.floor(waitB / 5000), 6);
+
+        if (score > bestScore) { bestScore = score; bestA = a; bestB = b; }
+      }
     }
 
-    if (bestMatch) {
-      this.createMatch(entryA, bestMatch);
-      this.attemptMatch();
+    if (bestA && bestB) {
+      this.createMatch(bestA, bestB);
+      this.attemptMatch(); // recurse for any remaining users
     }
   }
 
@@ -238,18 +261,14 @@ export class Matchmaker {
     const match = this.activeMatches.get(sessionId);
     if (!match) return;
     const peerId = match.socketA === socketId ? match.socketB : match.socketA;
+    const userA = match.socketA === socketId ? match.userA : match.userB;
+    const userB = match.socketA === socketId ? match.userB : match.userA;
     this.endSession(sessionId, 'skip');
     const socketA = this.io.sockets.sockets.get(socketId);
     const socketB = this.io.sockets.sockets.get(peerId);
-    // Re-queue — preserve preferences by re-using addToQueue with existing socket data
-    if (socketA) {
-      const entry = { userId: match.socketA === socketId ? match.userA : match.userB };
-      this.addToQueue(socketA, entry.userId);
-    }
-    if (socketB) {
-      const entry = { userId: match.socketA === socketId ? match.userB : match.userA };
-      this.addToQueue(socketB, entry.userId);
-    }
+    // Re-queue with original preferences so filters are preserved after skip
+    if (socketA) this.addToQueue(socketA, userA, this.userPrefs.get(userA));
+    if (socketB) this.addToQueue(socketB, userB, this.userPrefs.get(userB));
   }
 
   endChat(socketId: string): void {

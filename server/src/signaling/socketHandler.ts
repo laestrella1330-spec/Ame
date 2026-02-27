@@ -65,7 +65,7 @@ function getClientIp(socket: Socket): string {
 
 // ─── Rate limiting ────────────────────────────────────────────────────────────
 const ipConnectionCount = new Map<string, number>();
-const MAX_CONNECTIONS_PER_IP = 3;
+const MAX_CONNECTIONS_PER_IP = 5;
 const socketMessageTimestamps = new Map<string, number[]>();
 const MAX_MESSAGES_PER_SECOND = 5;
 
