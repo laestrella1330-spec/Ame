@@ -129,6 +129,28 @@ export class Matchmaker {
   private attemptMatch(): void {
     if (this.queue.size < 2) return;
 
+    // Evict anyone who was banned while waiting in the queue
+    for (const [socketId, entry] of this.queue.entries()) {
+      const ban = getActiveUserBan(entry.userId);
+      if (ban) {
+        this.queue.delete(socketId);
+        const bannedSocket = this.io.sockets.sockets.get(socketId);
+        if (bannedSocket) {
+          const remainingDays = Math.max(1, Math.ceil(
+            (new Date(ban.expires_at).getTime() - Date.now()) / 86400000
+          ));
+          bannedSocket.emit('banned', {
+            reason: ban.reason ?? 'Violation of Terms of Service',
+            expiresAt: ban.expires_at,
+            remainingDays,
+          });
+          setTimeout(() => bannedSocket.disconnect(true), 300);
+        }
+      }
+    }
+
+    if (this.queue.size < 2) return;
+
     const entries = Array.from(this.queue.values());
     const now = Date.now();
     const entryA = entries[0];

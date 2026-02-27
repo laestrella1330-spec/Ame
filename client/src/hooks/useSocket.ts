@@ -35,6 +35,7 @@ export function useSocket() {
         // Always write — use generic fallback so ban screen always appears.
         sessionStorage.setItem('banned_reason', d?.reason ?? 'Violation of Terms of Service');
         sessionStorage.setItem('banned_days', String(d?.remainingDays ?? 0));
+        disconnectSocket(); // cancel pending reconnects immediately
         logout();
         navigate('/login', { replace: true });
       }

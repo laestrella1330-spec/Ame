@@ -88,6 +88,9 @@ export default function AdminDashboard() {
   const [banUserReason, setBanUserReason] = useState('');
   const [userBanHistory, setUserBanHistory] = useState<{ userId: string; bans: UserBan[] } | null>(null);
 
+  // Ban action feedback
+  const [banActionMsg, setBanActionMsg] = useState<{ text: string; ok: boolean } | null>(null);
+
   // Monitoring
   const adminSocketRef = useRef<Socket | null>(null);
   const [monitoredSession, setMonitoredSession] = useState<string | null>(null);
@@ -292,13 +295,19 @@ export default function AdminDashboard() {
   };
 
   const handleBanFromReport = async (report: Report) => {
-    await apiPost('/bans', {
-      identifier: report.reported_id,
-      identifierType: 'ip',
-      reason: `Report #${report.id}: ${report.reason}`,
-    });
-    await apiPatch(`/reports/${report.id}`, { status: 'actioned' });
-    fetchData();
+    try {
+      await apiPost(`/users/${report.reported_id}/ban`, {
+        reason: `Report #${report.id}: ${report.reason}`,
+      });
+      await apiPatch(`/reports/${report.id}`, { status: 'actioned' });
+      setBanActionMsg({ text: 'User banned successfully.', ok: true });
+      fetchData();
+      fetchUsers();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setBanActionMsg({ text: msg.includes('already banned') ? 'User is already banned.' : `Ban failed: ${msg}`, ok: false });
+    }
+    setTimeout(() => setBanActionMsg(null), 4000);
   };
 
   const handleAddIpBan = async () => {
@@ -316,10 +325,18 @@ export default function AdminDashboard() {
 
   const handleBanUser = async () => {
     if (!banUserId) return;
-    await apiPost(`/users/${banUserId}/ban`, { reason: banUserReason || null });
-    setBanUserId(null);
-    setBanUserReason('');
-    fetchUsers();
+    try {
+      await apiPost(`/users/${banUserId}/ban`, { reason: banUserReason || null });
+      setBanActionMsg({ text: 'User banned successfully.', ok: true });
+      setBanUserId(null);
+      setBanUserReason('');
+      fetchUsers();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setBanActionMsg({ text: msg.includes('already banned') ? 'User is already banned.' : `Ban failed: ${msg}`, ok: false });
+      setBanUserId(null);
+    }
+    setTimeout(() => setBanActionMsg(null), 4000);
   };
 
   const handleUnbanUser = async (userId: string) => {
@@ -373,6 +390,14 @@ export default function AdminDashboard() {
                 <div className="text-white text-2xl font-bold">{stat.value}</div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Ban action feedback toast */}
+        {banActionMsg && (
+          <div className={`flex items-center gap-2 px-4 py-3 mb-4 rounded-xl text-sm border ${banActionMsg.ok ? 'bg-green-600/15 border-green-500/30 text-green-400' : 'bg-red-600/15 border-red-500/30 text-red-400'}`}>
+            <span>{banActionMsg.ok ? '✓' : '⚠'}</span>
+            <span>{banActionMsg.text}</span>
           </div>
         )}
 
@@ -431,7 +456,7 @@ export default function AdminDashboard() {
                           onClick={() => handleBanFromReport(r)}
                           className="px-2 py-1 bg-red-600 hover:bg-red-700 text-white rounded text-xs"
                         >
-                          IP Ban
+                          Ban User
                         </button>
                       </td>
                     </tr>

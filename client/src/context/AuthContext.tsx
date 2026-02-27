@@ -44,11 +44,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         sessionStorage.setItem('banned_days', String(me.activeBan.remainingDays ?? 0));
         localStorage.removeItem('user_token');
         disconnectSocket();
-        setUser(null);
+        // Hard redirect — works from any page (landing, chat, etc.), not just ChatPage
+        window.location.replace('/login');
+        return;
       } else {
         setUser(me);
       }
-    } catch {
+    } catch (err: unknown) {
+      // Check if server explicitly rejected with account_banned
+      const e = err as { status?: number; data?: Record<string, unknown> };
+      if (e.status === 403 && e.data?.error === 'account_banned') {
+        sessionStorage.setItem('banned_reason', String(e.data.reason ?? 'Violation of Terms of Service'));
+        sessionStorage.setItem('banned_days', String(e.data.remainingDays ?? 0));
+        localStorage.removeItem('user_token');
+        disconnectSocket();
+        window.location.replace('/login');
+        return;
+      }
       // Token invalid/expired — clear it
       localStorage.removeItem('user_token');
       setUser(null);
@@ -69,7 +81,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const handleVisibility = () => { if (!document.hidden) check(); };
     document.addEventListener('visibilitychange', handleVisibility);
     window.addEventListener('focus', check);
-    const interval = setInterval(check, 60_000);
+    const interval = setInterval(check, 15_000);
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibility);
