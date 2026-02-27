@@ -28,6 +28,19 @@ export async function initDb(): Promise<SqlJsDatabase> {
     db = new SQL.Database();
   }
 
+  // ── Column migrations FIRST (safe ALTER TABLE — errors are silently ignored) ─
+  // These must run before schema.sql so that any CREATE INDEX statements that
+  // reference new columns succeed even on databases created before this migration.
+  // SQLite does not support IF NOT EXISTS for ALTER TABLE, so we swallow errors.
+  const columnMigrations = [
+    `ALTER TABLE users ADD COLUMN dob TEXT`,
+    `ALTER TABLE users ADD COLUMN deleted_at TEXT`,
+    `ALTER TABLE reports ADD COLUMN is_priority INTEGER NOT NULL DEFAULT 0`,
+  ];
+  for (const migration of columnMigrations) {
+    try { db.run(migration + ';'); } catch { /* column already exists or table not yet created */ }
+  }
+
   // Run schema (exec handles multiple statements)
   const schemaPath = path.resolve(__dirname, 'schema.sql');
   const schema = fs.readFileSync(schemaPath, 'utf-8');
@@ -35,18 +48,6 @@ export async function initDb(): Promise<SqlJsDatabase> {
   const statements = schema.split(';').map(s => s.trim()).filter(s => s.length > 0);
   for (const stmt of statements) {
     db.run(stmt + ';');
-  }
-
-  // ── Column migrations (safe ALTER TABLE — errors are silently ignored) ─────
-  // SQLite does not support IF NOT EXISTS for ALTER TABLE, so we try each
-  // migration and swallow "duplicate column" errors.
-  const columnMigrations = [
-    `ALTER TABLE users ADD COLUMN dob TEXT`,
-    `ALTER TABLE users ADD COLUMN deleted_at TEXT`,
-    `ALTER TABLE reports ADD COLUMN is_priority INTEGER NOT NULL DEFAULT 0`,
-  ];
-  for (const migration of columnMigrations) {
-    try { db.run(migration + ';'); } catch { /* column already exists */ }
   }
 
   // Save periodically
