@@ -441,6 +441,15 @@ export default function ChatPage() {
             onClose={() => setShowSettings(false)}
             onLogout={() => { logout(); navigate('/login', { replace: true }); }} />
         )}
+
+        {/* Camera permission rationale — must live here too since standby returns early */}
+        {showCameraModal && (
+          <CameraPermissionModal onContinue={() => {
+            localStorage.setItem('cam_rationale_seen', 'true');
+            setShowCameraModal(false);
+            void startMedia();
+          }} />
+        )}
       </div>
     );
   }
