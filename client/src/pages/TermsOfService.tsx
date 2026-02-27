@@ -20,10 +20,11 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-white font-semibold text-lg mb-2">2. Eligibility</h2>
+            <h2 className="text-white font-semibold text-lg mb-2">2. Eligibility — 18+ Only</h2>
             <p>
-              You must be at least 18 years old to use this service. By using the service,
-              you confirm that you meet this age requirement.
+              You must be at least <strong className="text-white">18 years old</strong> to use this
+              service. By creating an account you confirm that you meet this age requirement. Users
+              found to be under 18 will be permanently banned and their accounts deleted.
             </p>
           </section>
 
@@ -38,20 +39,38 @@ export default function TermsOfService() {
               <li>Use the service for commercial purposes or spam</li>
               <li>Attempt to circumvent bans or moderation measures</li>
               <li>Use automated tools or bots to access the service</li>
+              <li>Expose, solicit, or share any content involving minors</li>
             </ul>
           </section>
 
           <section>
             <h2 className="text-white font-semibold text-lg mb-2">4. Moderation</h2>
             <p>
-              Users can report violations using the Report button. Reports are reviewed by administrators.
-              Violations may result in temporary or permanent bans. Users who receive multiple reports
-              may be automatically banned.
+              Users can report violations using the Report button during a chat. Reports are reviewed
+              by our moderation team. Violations may result in temporary or permanent bans. Users who
+              receive 3 or more reports within a short period will be automatically suspended pending
+              review. You can also block a user at any time to prevent future matches with them.
             </p>
           </section>
 
           <section>
-            <h2 className="text-white font-semibold text-lg mb-2">5. No Guarantee of Safety</h2>
+            <h2 className="text-white font-semibold text-lg mb-2">5. Child Safety — Zero Tolerance</h2>
+            <p>
+              Ame has a <strong className="text-white">zero-tolerance policy</strong> for child sexual
+              abuse material (CSAM) and any content that exploits or endangers minors. Any user who
+              shares, solicits, or attempts to obtain such content will be permanently banned, and the
+              incident will be reported to the National Center for Missing and Exploited Children
+              (NCMEC) and relevant law enforcement agencies.
+            </p>
+            <p className="mt-2">
+              If you encounter content that may involve a minor being harmed, use the in-app Report
+              button immediately and select <strong className="text-white">"Suspected Underage User"</strong>.
+              This triggers a priority escalation to our moderation team.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-white font-semibold text-lg mb-2">6. No Guarantee of Safety</h2>
             <p>
               While we take moderation seriously, we cannot guarantee the behavior of other users.
               You use this service at your own risk. If you encounter inappropriate behavior,
@@ -60,7 +79,17 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-white font-semibold text-lg mb-2">6. Disclaimer</h2>
+            <h2 className="text-white font-semibold text-lg mb-2">7. Account Deletion</h2>
+            <p>
+              You may delete your account at any time from the Settings panel within the app.
+              Deletion permanently removes your personal information (email, phone number, display
+              name) from our systems. Session records are retained in anonymized form for safety
+              and legal compliance for up to 12 months.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-white font-semibold text-lg mb-2">8. Disclaimer</h2>
             <p>
               The service is provided "as is" without warranties of any kind. We are not liable
               for any damages arising from your use of the service, including but not limited to
@@ -69,10 +98,18 @@ export default function TermsOfService() {
           </section>
 
           <section>
-            <h2 className="text-white font-semibold text-lg mb-2">7. Termination</h2>
+            <h2 className="text-white font-semibold text-lg mb-2">9. Termination</h2>
             <p>
               We reserve the right to terminate or restrict access to the service for any user
               at any time, with or without cause.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-white font-semibold text-lg mb-2">10. Contact</h2>
+            <p>
+              For support or ban appeals: <span className="text-violet-400">support@ame.app</span>.
+              For data deletion or privacy inquiries: <span className="text-violet-400">privacy@ame.app</span>.
             </p>
           </section>
         </div>

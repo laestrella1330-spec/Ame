@@ -11,6 +11,7 @@ const REASONS = [
   { value: 'harassment', label: 'Harassment' },
   { value: 'spam', label: 'Spam' },
   { value: 'underage', label: 'Suspected Underage User' },
+  { value: 'csam', label: 'Child Sexual Abuse Material (CSAM)' },
   { value: 'other', label: 'Other' },
 ];
 
@@ -69,6 +70,19 @@ export default function ReportModal({ socket, onClose }: ReportModalProps) {
             </label>
           ))}
         </div>
+
+        {/* Priority warning shown for underage / CSAM reports — escalated immediately */}
+        {(reason === 'underage' || reason === 'csam') && (
+          <div className="flex items-start gap-3 p-3 rounded-lg bg-red-600/10 border border-red-600/30 mb-3">
+            <span className="text-red-400 text-lg flex-shrink-0">🚨</span>
+            <p className="text-xs text-red-300 leading-relaxed">
+              <strong>Priority report.</strong>{' '}
+              {reason === 'csam'
+                ? 'CSAM reports are forwarded to our safety team and reported to NCMEC as required by law. Please add any details below.'
+                : 'This is escalated to our moderation team immediately. Please add any details that may help identify the user.'}
+            </p>
+          </div>
+        )}
 
         <textarea
           placeholder="Additional details (optional, max 500 characters)"

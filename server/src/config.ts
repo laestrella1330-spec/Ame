@@ -58,7 +58,28 @@ export const config = {
   },
 };
 
+// TURN relay servers — set TURN_URL, TURN_USERNAME, TURN_CREDENTIAL in env to enable.
+// A TURN server masks peer IP addresses from chat partners.
+// Set TURN_URL to the base turn: URL, e.g. "turn:global.relay.metered.ca:80"
+// All four connectivity variants (UDP/TCP on port 80 + 443 + TLS) are derived automatically.
+const turnServers = (() => {
+  const url = process.env.TURN_URL;
+  const username = process.env.TURN_USERNAME;
+  const credential = process.env.TURN_CREDENTIAL;
+  if (!url || !username || !credential) return [];
+
+  // Extract host from the base URL (e.g. "turn:global.relay.metered.ca:80" → "global.relay.metered.ca")
+  const host = url.replace(/^turns?:/, '').split(':')[0];
+  return [
+    { urls: `turn:${host}:80`,                        username, credential },
+    { urls: `turn:${host}:80?transport=tcp`,           username, credential },
+    { urls: `turn:${host}:443`,                        username, credential },
+    { urls: `turns:${host}:443?transport=tcp`,         username, credential },
+  ];
+})();
+
 export const ICE_SERVERS = [
   { urls: 'stun:stun.l.google.com:19302' },
   { urls: 'stun:stun1.l.google.com:19302' },
+  ...turnServers,
 ];

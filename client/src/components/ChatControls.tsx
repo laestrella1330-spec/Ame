@@ -9,6 +9,7 @@ interface ChatControlsProps {
   onSkip: () => void;
   onEndChat: () => void;
   onReport: () => void;
+  onBlock: () => void;
   onJoinQueue: () => void;
 }
 
@@ -23,6 +24,7 @@ export default function ChatControls({
   onSkip,
   onEndChat,
   onReport,
+  onBlock,
   onJoinQueue,
 }: ChatControlsProps) {
   const isIdle = connectionState === 'idle' || connectionState === 'disconnected';
@@ -118,6 +120,21 @@ export default function ChatControls({
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,255,255,0.7)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 15s1-1 4-1 5 2 8 2 4-1 4-1V3s-1 1-4 1-5-2-8-2-4 1-4 1z" />
               <line x1="4" y1="22" x2="4" y2="15" />
+            </svg>
+          </button>
+        )}
+
+        {/* Block (only when in chat) */}
+        {isInChat && (
+          <button
+            onClick={onBlock}
+            style={{ width: 44, height: 44 }}
+            className="rounded-full bg-white/10 border border-white/15 backdrop-blur-sm flex items-center justify-center active:scale-90 transition-all"
+            title="Block user"
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="rgba(255,100,100,0.85)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
             </svg>
           </button>
         )}

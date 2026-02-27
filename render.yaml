@@ -17,3 +17,12 @@ services:
         value: admin
       - key: ADMIN_PASSWORD
         sync: false
+      # TURN relay — optional but recommended for IP privacy.
+      # Get free credentials at https://dashboard.metered.ca/signup (20 GB/month free).
+      # Leave blank to fall back to STUN-only mode.
+      - key: TURN_URL
+        sync: false
+      - key: TURN_USERNAME
+        sync: false
+      - key: TURN_CREDENTIAL
+        sync: false

@@ -135,10 +135,11 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
+      const pendingDob = localStorage.getItem('pending_dob');
       const res = await fetch(`${API_BASE}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password, displayName }),
+        body: JSON.stringify({ email, password, displayName, ...(pendingDob ? { dob: pendingDob } : {}) }),
       });
       const data = await res.json() as Record<string, unknown>;
       if (!res.ok) {
@@ -184,10 +185,11 @@ export default function LoginPage() {
     setError('');
     setLoading(true);
     try {
+      const pendingDob = localStorage.getItem('pending_dob');
       const res = await fetch(`${API_BASE}/auth/phone/verify`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone, code: otpCode, displayName: displayName || undefined }),
+        body: JSON.stringify({ phone, code: otpCode, displayName: displayName || undefined, ...(pendingDob ? { dob: pendingDob } : {}) }),
       });
       const data = await res.json() as Record<string, unknown>;
       if (!res.ok) {
@@ -255,7 +257,11 @@ export default function LoginPage() {
         {/* Logo */}
         <div className="text-center mb-8 animate-float">
           <img src="/logo.png" alt="Ame" style={{ height: 80, margin: '0 auto 12px', filter: 'drop-shadow(0 0 20px rgba(139,92,246,0.55))' }} />
-          <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 13, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.65)' }}>Sign in to start chatting</p>
+          <p style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 13, letterSpacing: '0.14em', textTransform: 'uppercase', color: 'rgba(167,139,250,0.65)', marginBottom: 8 }}>Sign in to start chatting</p>
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6, background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.35)', borderRadius: 8, padding: '3px 10px' }}>
+            <span style={{ color: '#f87171', fontFamily: "'Orbitron', sans-serif", fontSize: 10, fontWeight: 700, letterSpacing: '0.12em' }}>18+</span>
+            <span style={{ color: 'rgba(226,232,240,0.55)', fontFamily: "'Rajdhani', sans-serif", fontSize: 11, letterSpacing: '0.04em' }}>Adults only</span>
+          </span>
         </div>
 
         {/* Error */}
@@ -362,7 +368,7 @@ export default function LoginPage() {
         )}
 
         <p style={{ textAlign: 'center', fontFamily: "'Rajdhani', sans-serif", fontSize: 11, letterSpacing: '0.04em', color: 'rgba(100,116,139,0.7)', marginTop: 14 }}>
-          By signing in you agree to our{' '}
+          By signing in you confirm you are 18+ and agree to our{' '}
           <Link to="/terms" style={{ color: 'rgba(167,139,250,0.75)' }}>Terms</Link>{' '}and{' '}
           <Link to="/privacy" style={{ color: 'rgba(167,139,250,0.75)' }}>Privacy Policy</Link>
         </p>

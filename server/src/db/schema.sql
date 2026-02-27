@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS reports (
     reason TEXT NOT NULL,
     description TEXT,
     status TEXT NOT NULL DEFAULT 'pending',
+    is_priority INTEGER NOT NULL DEFAULT 0,  -- 1 = underage/CSAM, requires urgent review
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     reviewed_at TEXT,
     reviewed_by TEXT
@@ -56,6 +57,8 @@ CREATE TABLE IF NOT EXISTS users (
     phone_verified INTEGER NOT NULL DEFAULT 0,
     role TEXT NOT NULL DEFAULT 'user',
     is_active INTEGER NOT NULL DEFAULT 1,
+    dob TEXT,                          -- YYYY-MM-DD, for age verification
+    deleted_at TEXT,                   -- set on account deletion (GDPR right to erasure)
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     last_login_at TEXT
 );
@@ -134,6 +137,22 @@ CREATE TABLE IF NOT EXISTS session_ai_events (
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
+-- ─── User blocks ─────────────────────────────────────────────────────────────
+-- Prevents blocked users from being matched together again.
+CREATE TABLE IF NOT EXISTS user_blocks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    blocker_id TEXT NOT NULL REFERENCES users(id),
+    blocked_id TEXT NOT NULL REFERENCES users(id),
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE(blocker_id, blocked_id)
+);
+
+-- ─── Schema migrations (safe to re-run) ──────────────────────────────────────
+-- Add columns that may not exist in databases created before this migration.
+-- SQLite does not support IF NOT EXISTS for ALTER TABLE columns,
+-- so errors are silently swallowed by the app on startup.
+-- (Handled in db/connection.ts)
+
 -- ─── Indexes ──────────────────────────────────────────────────────────────────
 CREATE INDEX IF NOT EXISTS idx_bans_identifier ON bans(identifier);
 CREATE INDEX IF NOT EXISTS idx_reports_status ON reports(status);
@@ -146,3 +165,6 @@ CREATE INDEX IF NOT EXISTS idx_audit_logs_event ON audit_logs(event_type);
 CREATE INDEX IF NOT EXISTS idx_otp_phone ON otp_codes(phone, used);
 CREATE INDEX IF NOT EXISTS idx_chat_feedback_session ON chat_feedback(session_id);
 CREATE INDEX IF NOT EXISTS idx_session_ai_events ON session_ai_events(session_id);
+CREATE INDEX IF NOT EXISTS idx_user_blocks_blocker ON user_blocks(blocker_id);
+CREATE INDEX IF NOT EXISTS idx_user_blocks_blocked ON user_blocks(blocked_id);
+CREATE INDEX IF NOT EXISTS idx_reports_priority ON reports(is_priority, status);

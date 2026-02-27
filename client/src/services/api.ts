@@ -60,6 +60,18 @@ export async function userGet<T>(path: string): Promise<T> {
   return res.json();
 }
 
+export async function userDelete(path: string): Promise<{ success: boolean; message?: string }> {
+  const res = await fetch(`${API_BASE}${path}`, {
+    method: 'DELETE',
+    headers: getUserHeaders(),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({ error: res.statusText })) as Record<string, unknown>;
+    throw Object.assign(new Error(String(err.error || res.statusText)), { status: res.status, data: err });
+  }
+  return res.json();
+}
+
 export async function userPost<T>(path: string, body?: unknown): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     method: 'POST',

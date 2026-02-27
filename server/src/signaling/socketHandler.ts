@@ -24,7 +24,7 @@ import { logAudit } from '../services/auditService.js';
 
 // ─── Schemas ──────────────────────────────────────────────────────────────────
 const reportSchema = z.object({
-  reason: z.enum(['inappropriate', 'harassment', 'spam', 'underage', 'other']),
+  reason: z.enum(['inappropriate', 'harassment', 'spam', 'underage', 'csam', 'other']),
   description: z.string().max(500).nullable().optional(),
 });
 
@@ -119,7 +119,9 @@ export function kickUser(userId: string, reason?: string, expiresAt?: string): v
         expiresAt,
         remainingDays,
       });
-      socket.disconnect(true);
+      // Delay force-disconnect so Socket.IO has time to flush the `banned` packet
+      // before the TCP connection is torn down (race condition fix).
+      setTimeout(() => socket.disconnect(true), 300);
     }
   }
 }
@@ -360,6 +362,11 @@ export function setupSocketHandlers(io: Server): Matchmaker {
         return;
       }
       matchmaker.reportUser(socket.id, parsed.data.reason, parsed.data.description ?? null);
+    });
+
+    // Block: prevent future matches with the current partner (no data payload needed)
+    socket.on('block-user', () => {
+      matchmaker.blockUser(socket.id);
     });
 
     socket.on('disconnect', () => {

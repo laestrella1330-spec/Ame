@@ -297,7 +297,7 @@ export function useWebRTC(socket: Socket | null, localStream: MediaStream | null
           data: { sdp: pc.localDescription },
         });
       } catch (err) {
-        console.error('[Monitor] Failed to answer admin offer:', err);
+        if (import.meta.env.DEV) console.error('[Monitor] Failed to answer admin offer:', err);
       }
     };
 

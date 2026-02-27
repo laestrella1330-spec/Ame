@@ -1,6 +1,9 @@
 import { queryOne, queryAll, execute, lastInsertRowId } from '../db/connection.js';
 import type { Report } from '../types/index.js';
 
+// Reasons that require immediate admin attention (CSAM / child safety)
+const PRIORITY_REASONS = new Set(['underage', 'csam']);
+
 export function createReport(
   sessionId: string,
   reporterId: string,
@@ -8,9 +11,11 @@ export function createReport(
   reason: string,
   description: string | null
 ): Report {
+  const isPriority = PRIORITY_REASONS.has(reason) ? 1 : 0;
   execute(
-    'INSERT INTO reports (session_id, reporter_id, reported_id, reason, description) VALUES (?, ?, ?, ?, ?)',
-    [sessionId, reporterId, reportedId, reason, description]
+    `INSERT INTO reports (session_id, reporter_id, reported_id, reason, description, is_priority)
+     VALUES (?, ?, ?, ?, ?, ?)`,
+    [sessionId, reporterId, reportedId, reason, description, isPriority]
   );
   const id = lastInsertRowId();
   return queryOne<Report>('SELECT * FROM reports WHERE id = ?', [id])!;

@@ -100,15 +100,21 @@ export default function LandingPage() {
           </div>
         </div>
 
+        {/* 18+ notice */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 14 }}>
+          <span style={{ background: 'rgba(239,68,68,0.15)', border: '1px solid rgba(239,68,68,0.4)', color: '#f87171', fontFamily: "'Orbitron', sans-serif", fontSize: 11, fontWeight: 700, letterSpacing: '0.12em', padding: '3px 10px', borderRadius: 6 }}>18+</span>
+          <span style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 13, color: 'rgba(226,232,240,0.6)', letterSpacing: '0.04em' }}>This platform is for adults only. You must be 18 or older to use Ame.</span>
+        </div>
+
         {/* CTA */}
-        <button onClick={() => navigate('/login')}
+        <button onClick={() => navigate('/age-gate')}
           className="active:scale-95 transition-all"
           style={{ width: '100%', padding: '16px', background: 'linear-gradient(135deg, #6d28d9, #8B5CF6, #7c3aed)', border: 'none', borderRadius: 40, color: 'white', fontFamily: "'Orbitron', sans-serif", fontSize: 13, fontWeight: 700, letterSpacing: '0.14em', textTransform: 'uppercase', cursor: 'pointer', boxShadow: '0 0 28px rgba(139,92,246,0.65), 0 0 56px rgba(139,92,246,0.2)', marginBottom: 16 }}>
           Get Started
         </button>
 
         <p className="text-center" style={{ fontFamily: "'Rajdhani', sans-serif", fontSize: 12, color: 'rgba(100,116,139,0.8)', letterSpacing: '0.04em' }}>
-          By using this service you agree to our{' '}
+          By using this service you confirm you are 18+ and agree to our{' '}
           <Link to="/terms" style={{ color: 'rgba(167,139,250,0.8)' }}>Terms of Service</Link>
           {' '}and{' '}
           <Link to="/privacy" style={{ color: 'rgba(167,139,250,0.8)' }}>Privacy Policy</Link>.

@@ -69,6 +69,39 @@ export function linkFacebookToUser(userId: string, facebookId: string): void {
   execute(`UPDATE users SET facebook_id = ? WHERE id = ?`, [facebookId, userId]);
 }
 
+// ─── Delete (GDPR right to erasure) ──────────────────────────────────────────
+
+/**
+ * Soft-delete a user account:
+ *  - Clears PII (email, phone, facebook_id, password_hash, display_name, dob)
+ *  - Sets deleted_at timestamp
+ *  - Marks account inactive
+ * Session records are kept (anonymised by user ID change) for safety/legal hold.
+ */
+export function deleteUser(userId: string): void {
+  const anonymised = `deleted_${userId.slice(0, 8)}`;
+  execute(
+    `UPDATE users
+     SET email        = NULL,
+         phone        = NULL,
+         facebook_id  = NULL,
+         password_hash= NULL,
+         display_name = ?,
+         dob          = NULL,
+         is_active    = 0,
+         deleted_at   = datetime('now')
+     WHERE id = ?`,
+    [anonymised, userId]
+  );
+}
+
+/**
+ * Store (or update) the user's date of birth. Used for age verification.
+ */
+export function updateDob(userId: string, dob: string): void {
+  execute(`UPDATE users SET dob = ? WHERE id = ?`, [dob, userId]);
+}
+
 // ─── Admin listing ────────────────────────────────────────────────────────────
 
 export function listUsers(

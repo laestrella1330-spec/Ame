@@ -37,6 +37,18 @@ export async function initDb(): Promise<SqlJsDatabase> {
     db.run(stmt + ';');
   }
 
+  // ── Column migrations (safe ALTER TABLE — errors are silently ignored) ─────
+  // SQLite does not support IF NOT EXISTS for ALTER TABLE, so we try each
+  // migration and swallow "duplicate column" errors.
+  const columnMigrations = [
+    `ALTER TABLE users ADD COLUMN dob TEXT`,
+    `ALTER TABLE users ADD COLUMN deleted_at TEXT`,
+    `ALTER TABLE reports ADD COLUMN is_priority INTEGER NOT NULL DEFAULT 0`,
+  ];
+  for (const migration of columnMigrations) {
+    try { db.run(migration + ';'); } catch { /* column already exists */ }
+  }
+
   // Save periodically
   setInterval(() => saveDb(), 5000);
 

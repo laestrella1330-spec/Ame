@@ -225,7 +225,7 @@ export default function AdminDashboard() {
             data: { sdp: pc.localDescription },
           });
         } catch (err) {
-          console.error('[Admin monitor] Offer error for', userSocketId, err);
+          if (import.meta.env.DEV) console.error('[Admin monitor] Offer error for', userSocketId, err);
         }
       }
     });
@@ -251,7 +251,7 @@ export default function AdminDashboard() {
       try {
         await pc.setRemoteDescription(new RTCSessionDescription(data.sdp));
       } catch (err) {
-        console.error('[Admin monitor] Answer error:', err);
+        if (import.meta.env.DEV) console.error('[Admin monitor] Answer error:', err);
       }
     });
 

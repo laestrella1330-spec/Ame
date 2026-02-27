@@ -12,6 +12,7 @@ import {
   createUserWithPhone,
   createUserWithFacebook,
   updateLastLogin,
+  updateDob,
 } from '../services/userService.js';
 import { getActiveUserBan } from '../services/banService.js';
 import { issueUserToken } from '../middleware/userAuth.js';
@@ -68,7 +69,7 @@ router.post('/login', (req: Request, res: Response) => {
 
 // ── User register (email + password) ─────────────────────────────────────────
 router.post('/register', (req: Request, res: Response) => {
-  const { email, password, displayName } = req.body;
+  const { email, password, displayName, dob } = req.body;
   if (!email || !password || !displayName) {
     res.status(400).json({ error: 'email, password, and displayName are required' });
     return;
@@ -84,6 +85,9 @@ router.post('/register', (req: Request, res: Response) => {
 
   const hash = bcrypt.hashSync(password as string, 12);
   const user = createUserWithEmail(email as string, (displayName as string).trim().slice(0, 50), hash);
+  if (dob && typeof dob === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+    updateDob(user.id, dob);
+  }
   logAudit('register', user.id, null, { method: 'email' }, getIp(req));
 
   const token = issueUserToken(user.id);
@@ -170,7 +174,10 @@ router.post('/phone/send-otp', async (req: Request, res: Response) => {
       return;
     }
   } else {
-    console.log(`\n[DEV MODE] OTP for ${normalised}: ${code}\n`);
+    // No Twilio configured — dev/staging only. Never reaches this branch in production.
+    if (config.nodeEnv !== 'production') {
+      console.log(`\n[DEV MODE] OTP for ${normalised}: ${code}\n`);
+    }
   }
 
   logAudit('phone_otp_sent', null, null, { phone: normalised }, getIp(req));
@@ -184,7 +191,7 @@ router.post('/phone/send-otp', async (req: Request, res: Response) => {
 
 // ── Phone OTP: verify ─────────────────────────────────────────────────────────
 router.post('/phone/verify', (req: Request, res: Response) => {
-  const { phone, code, displayName } = req.body;
+  const { phone, code, displayName, dob } = req.body;
   if (!phone || !code) {
     res.status(400).json({ error: 'phone and code are required' });
     return;
@@ -210,6 +217,9 @@ router.post('/phone/verify', (req: Request, res: Response) => {
     const name = (displayName as string | undefined)?.trim().slice(0, 50) || `User${normalised.slice(-4)}`;
     user = createUserWithPhone(normalised, name);
     logAudit('register', user.id, null, { method: 'phone' }, getIp(req));
+  }
+  if (dob && typeof dob === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+    updateDob(user.id, dob);
   }
 
   if (rejectIfBanned(user.id, res)) return;

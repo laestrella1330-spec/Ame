@@ -16,6 +16,7 @@ export interface Report {
   reason: string;
   description: string | null;
   status: 'pending' | 'reviewed' | 'actioned' | 'dismissed';
+  is_priority: number; // 1 = underage/CSAM — requires urgent review
   created_at: string;
   reviewed_at: string | null;
   reviewed_by: string | null;
@@ -50,8 +51,18 @@ export interface User {
   phone_verified: number;
   role: 'user' | 'admin';
   is_active: number;
+  dob: string | null;        // YYYY-MM-DD
+  deleted_at: string | null; // set on GDPR account deletion
   created_at: string;
   last_login_at: string | null;
+}
+
+// ─── User block ───────────────────────────────────────────────────────────────
+export interface UserBlock {
+  id: number;
+  blocker_id: string;
+  blocked_id: string;
+  created_at: string;
 }
 
 // ─── Progressive user ban ─────────────────────────────────────────────────────

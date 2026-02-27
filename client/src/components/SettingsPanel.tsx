@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { userDelete } from '../services/api';
 import type { UserSettings, Gender, PreferredGender, EnergyLevel, Intent } from '../hooks/useSettings';
 import { useFeatures } from '../context/FeaturesContext';
 
@@ -126,6 +127,23 @@ function Toggle({
 export default function SettingsPanel({ settings, onUpdate, onClose, onLogout }: SettingsPanelProps) {
   const features = useFeatures();
   const [interestInput, setInterestInput] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState('');
+
+  const handleDeleteAccount = async () => {
+    setDeleteLoading(true);
+    setDeleteError('');
+    try {
+      await userDelete('/users/me');
+      // Server deletes PII and disconnects sockets — log out locally too
+      onLogout();
+    } catch (err) {
+      setDeleteError(err instanceof Error ? err.message : 'Failed to delete account. Try again.');
+    } finally {
+      setDeleteLoading(false);
+    }
+  };
 
   const addInterest = () => {
     const tag = interestInput.trim().toLowerCase().slice(0, 30);
@@ -319,6 +337,40 @@ export default function SettingsPanel({ settings, onUpdate, onClose, onLogout }:
         >
           Sign Out
         </button>
+
+        {/* Account deletion */}
+        {!showDeleteConfirm ? (
+          <button
+            onClick={() => setShowDeleteConfirm(true)}
+            className="w-full py-2 text-slate-600 hover:text-red-500 text-xs border-0 bg-transparent transition-colors"
+          >
+            Delete Account & Data
+          </button>
+        ) : (
+          <div className="rounded-xl border border-red-600/30 bg-red-600/8 p-3 mt-1">
+            <p className="text-xs text-red-300 mb-2 leading-relaxed">
+              <strong>Permanently delete your account?</strong> All personal data (email, phone, display name) will be erased immediately. This cannot be undone.
+            </p>
+            {deleteError && (
+              <p className="text-xs text-red-400 mb-2">{deleteError}</p>
+            )}
+            <div className="flex gap-2">
+              <button
+                onClick={() => { setShowDeleteConfirm(false); setDeleteError(''); }}
+                className="flex-1 py-1.5 bg-white/10 text-slate-300 rounded-lg text-xs border border-white/10"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deleteLoading}
+                className="flex-1 py-1.5 bg-red-600 hover:bg-red-700 disabled:opacity-50 text-white rounded-lg text-xs"
+              >
+                {deleteLoading ? 'Deleting…' : 'Yes, Delete'}
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

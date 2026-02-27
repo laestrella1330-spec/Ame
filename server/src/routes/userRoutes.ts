@@ -2,8 +2,11 @@
  * User-facing and admin user-management endpoints.
  *
  * User endpoints (require valid user JWT):
- *   GET  /api/users/me               → current user profile + ban status + consent status
- *   POST /api/users/accept-consent   → record monitoring consent
+ *   GET    /api/users/me               → current user profile + ban status + consent status
+ *   POST   /api/users/accept-consent   → record monitoring consent
+ *   DELETE /api/users/me               → delete own account (GDPR right to erasure)
+ *   POST   /api/users/block/:id        → block a user (by userId)
+ *   DELETE /api/users/block/:id        → unblock a user (by userId)
  *
  * Admin endpoints (require admin JWT):
  *   GET  /api/users                  → paginated user list
@@ -15,7 +18,8 @@
 import { Router, Response } from 'express';
 import { authMiddleware, AuthRequest } from '../middleware/auth.js';
 import { userAuthMiddleware, UserAuthRequest } from '../middleware/userAuth.js';
-import { findUserById, listUsers } from '../services/userService.js';
+import { findUserById, listUsers, deleteUser, updateDob } from '../services/userService.js';
+import { createBlock, removeBlock } from '../services/blockService.js';
 import {
   getActiveUserBan,
   createUserBan,
@@ -24,7 +28,7 @@ import {
   listActiveUserBans,
 } from '../services/banService.js';
 import { logAudit } from '../services/auditService.js';
-import { queryOne, queryAll, execute } from '../db/connection.js';
+import { queryOne, execute } from '../db/connection.js';
 import type { UserConsent } from '../types/index.js';
 import { kickUser, getActiveSessions } from '../signaling/socketHandler.js';
 
@@ -85,6 +89,53 @@ router.post('/accept-consent', userAuthMiddleware, (req: UserAuthRequest, res: R
   );
 
   logAudit('consent_accepted', userId, null, { consent_type: 'monitoring_warning' }, getIp(req));
+  res.json({ success: true });
+});
+
+// ── DELETE /api/users/me ──────────────────────────────────────────────────────
+// GDPR right to erasure. Clears PII and marks account inactive.
+router.delete('/me', userAuthMiddleware, (req: UserAuthRequest, res: Response) => {
+  const userId = req.user!.userId;
+  const user = findUserById(userId);
+  if (!user) { res.status(404).json({ error: 'User not found' }); return; }
+  if (user.deleted_at) { res.status(409).json({ error: 'Account already deleted' }); return; }
+
+  deleteUser(userId);
+  logAudit('account_deleted', userId, null, {}, getIp(req));
+
+  // Force disconnect any active sockets
+  kickUser(userId, 'Account deleted');
+
+  res.json({ success: true, message: 'Your account and personal data have been deleted.' });
+});
+
+// ── POST /api/users/me/dob ────────────────────────────────────────────────────
+// Store date of birth for age-verification compliance. Accepts YYYY-MM-DD.
+// Called by the client after any successful login if a pending_dob exists in localStorage.
+router.post('/me/dob', userAuthMiddleware, (req: UserAuthRequest, res: Response) => {
+  const { dob } = req.body as { dob?: string };
+  if (!dob || typeof dob !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(dob)) {
+    res.status(400).json({ error: 'dob must be a valid YYYY-MM-DD date string' });
+    return;
+  }
+  updateDob(req.user!.userId, dob);
+  res.json({ success: true });
+});
+
+// ── POST /api/users/block/:id (user) ─────────────────────────────────────────
+// Block another user by their userId. Prevents future matches.
+router.post('/block/:id', userAuthMiddleware, (req: UserAuthRequest, res: Response) => {
+  const blockerId = req.user!.userId;
+  const blockedId = req.params.id as string;
+  if (blockerId === blockedId) { res.status(400).json({ error: 'Cannot block yourself' }); return; }
+  createBlock(blockerId, blockedId);
+  logAudit('user_block', blockerId, blockedId, {}, getIp(req));
+  res.json({ success: true });
+});
+
+// ── DELETE /api/users/block/:id (user) ───────────────────────────────────────
+router.delete('/block/:id', userAuthMiddleware, (req: UserAuthRequest, res: Response) => {
+  removeBlock(req.user!.userId, req.params.id as string);
   res.json({ success: true });
 });
 

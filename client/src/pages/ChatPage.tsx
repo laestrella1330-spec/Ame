@@ -17,6 +17,7 @@ import ChatControls from '../components/ChatControls';
 import AnimatedBackground from '../components/AnimatedBackground';
 import SettingsPanel from '../components/SettingsPanel';
 import SafetyWarningModal from '../components/SafetyWarningModal';
+import CameraPermissionModal from '../components/CameraPermissionModal';
 import WarmUpCard from '../components/WarmUpCard';
 import PostChatPanel from '../components/PostChatPanel';
 import CoHostWhisper from '../components/CoHostWhisper';
@@ -52,6 +53,8 @@ export default function ChatPage() {
   const [onlineCount, setOnlineCount] = useState<number>(0);
   const [localExpanded, setLocalExpanded] = useState(false);
   const [swapped, setSwapped] = useState(false);
+  // Camera permission rationale — show once before the OS permission dialog
+  const [showCameraModal, setShowCameraModal] = useState(false);
 
   const { settings, updateSettings } = useSettings();
 
@@ -109,9 +112,14 @@ export default function ChatPage() {
   // DO NOT auto-start camera — user must explicitly grant permission via ALLOW ACCESS
   // (stopMedia cleanup is handled inside useMediaStream's own unmount effect)
 
-  // "ALLOW ACCESS" button handler — called once by the user
-  const handleAllowAccess = useCallback(async () => {
-    await startMedia();
+  // "ALLOW ACCESS" button handler — shows rationale modal on first visit,
+  // then calls getUserMedia after the user taps Continue.
+  const handleAllowAccess = useCallback(() => {
+    if (!localStorage.getItem('cam_rationale_seen')) {
+      setShowCameraModal(true);
+    } else {
+      void startMedia();
+    }
   }, [startMedia]);
 
   const handleJoinQueue = useCallback(() => {
@@ -795,10 +803,20 @@ export default function ChatPage() {
             onSkip={skip}
             onEndChat={endChat}
             onReport={() => setShowReport(true)}
+            onBlock={() => socket?.emit('block-user')}
             onJoinQueue={handleJoinQueue}
           />
         </div>
       </div>
+
+      {/* Camera permission rationale — shown once before the OS dialog */}
+      {showCameraModal && (
+        <CameraPermissionModal onContinue={() => {
+          localStorage.setItem('cam_rationale_seen', 'true');
+          setShowCameraModal(false);
+          void startMedia();
+        }} />
+      )}
 
       {/* Shared modals */}
       {showReport && <ReportModal socket={socket} onClose={() => setShowReport(false)} />}

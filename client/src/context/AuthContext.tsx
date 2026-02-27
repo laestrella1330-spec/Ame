@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { App } from '@capacitor/app';
-import { userGet } from '../services/api';
+import { userGet, userPost } from '../services/api';
 import { disconnectSocket } from '../services/socket';
 
 export interface AuthUser {
@@ -37,7 +37,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (!token) { setUser(null); setIsLoading(false); return; }
     try {
       const me = await userGet<AuthUser>('/users/me');
-      setUser(me);
+      // If the server reports an active ban, treat the session as invalid:
+      // store ban info for the login screen, clear the token, and log out.
+      if (me.activeBan) {
+        sessionStorage.setItem('banned_reason', me.activeBan.reason ?? 'Violation of Terms of Service');
+        sessionStorage.setItem('banned_days', String(me.activeBan.remainingDays ?? 0));
+        localStorage.removeItem('user_token');
+        disconnectSocket();
+        setUser(null);
+      } else {
+        setUser(me);
+      }
     } catch {
       // Token invalid/expired — clear it
       localStorage.removeItem('user_token');
@@ -49,6 +59,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   // Rehydrate on mount
   useEffect(() => { refreshUser(); }, [refreshUser]);
+
+  // Re-check ban status whenever the user returns to this tab or window,
+  // and on a 60-second heartbeat. This ensures a ban applied by an admin
+  // takes effect promptly even if the socket did not deliver a kick event.
+  useEffect(() => {
+    const check = () => { if (localStorage.getItem('user_token')) refreshUser(); };
+
+    const handleVisibility = () => { if (!document.hidden) check(); };
+    document.addEventListener('visibilitychange', handleVisibility);
+    window.addEventListener('focus', check);
+    const interval = setInterval(check, 60_000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibility);
+      window.removeEventListener('focus', check);
+      clearInterval(interval);
+    };
+  }, [refreshUser]);
 
   // Handle Facebook OAuth deep link on Android (Capacitor appUrlOpen event)
   useEffect(() => {
@@ -79,15 +107,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     if (hash.includes('facebook-auth-success')) {
       const params = new URLSearchParams(hash.split('?')[1]);
       const token = params.get('token');
-      const displayName = params.get('displayName') ?? '';
-      const userId = params.get('userId') ?? '';
+      const _displayName = params.get('displayName') ?? '';
+      const _userId = params.get('userId') ?? '';
+      void _displayName; void _userId; // present in hash but not needed — server profile is fetched via refreshUser
       if (token) {
         localStorage.setItem('user_token', token);
         // Clear hash and refresh user from server
         window.history.replaceState(null, '', window.location.pathname);
         refreshUser();
       }
-      void displayName; void userId;
     }
     // Handle ban error from Facebook callback
     if (hash.includes('auth-error=banned')) {
@@ -100,6 +128,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       sessionStorage.setItem('banned_days', days);
     }
   }, [refreshUser]);
+
+  // After any login (email, phone, or Facebook), submit the DOB captured by AgeGatePage.
+  // This is a no-op for existing users who already have a DOB stored.
+  useEffect(() => {
+    if (!user) return;
+    const pendingDob = localStorage.getItem('pending_dob');
+    if (!pendingDob) return;
+    userPost('/users/me/dob', { dob: pendingDob })
+      .then(() => localStorage.removeItem('pending_dob'))
+      .catch(() => { /* silent — server-side DOB is best-effort; form paths already sent it */ });
+  }, [user?.id]);
 
   const login = useCallback((token: string, partial: Partial<AuthUser>) => {
     localStorage.setItem('user_token', token);

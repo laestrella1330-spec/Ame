@@ -2,10 +2,13 @@ import { v4 as uuidv4 } from 'uuid';
 import { Server, Socket } from 'socket.io';
 import { execute } from '../db/connection.js';
 import { ICE_SERVERS, config } from '../config.js';
-import { isBanned, checkAutoban, createBan } from '../services/banService.js';
+import { isBanned, checkAutoban, createUserBan, getActiveUserBan } from '../services/banService.js';
 import { createReport } from '../services/reportService.js';
+import { isBlockedEither, createBlock } from '../services/blockService.js';
 import { logAudit } from '../services/auditService.js';
 import type { QueueEntry, ActiveMatch } from '../types/index.js';
+// NOTE: do NOT import from socketHandler.ts — that would create a circular dependency.
+// Any kick needed inside the matchmaker is done directly via this.io using the known socket ID.
 import { generateWarmUp } from '../agents/warmupAgent.js';
 import { matchBiasScore } from '../agents/matchBiasAgent.js';
 
@@ -50,6 +53,20 @@ export class Matchmaker {
       return;
     }
 
+    const userBan = getActiveUserBan(userId);
+    if (userBan) {
+      const remainingDays = Math.max(1, Math.ceil(
+        (new Date(userBan.expires_at).getTime() - Date.now()) / 86400000
+      ));
+      socket.emit('banned', {
+        reason: userBan.reason ?? 'Violation of Terms of Service',
+        expiresAt: userBan.expires_at,
+        remainingDays,
+      });
+      setTimeout(() => socket.disconnect(true), 300);
+      return;
+    }
+
     this.removeFromSession(socket.id, 'requeue');
 
     this.queue.set(socket.id, {
@@ -75,6 +92,8 @@ export class Matchmaker {
   }
 
   private isCompatible(a: QueueEntry, b: QueueEntry): boolean {
+    // Never match users who have blocked each other
+    if (isBlockedEither(a.userId, b.userId)) return false;
     if (
       a.preferredGender && a.preferredGender !== 'any' &&
       b.gender && b.gender !== a.preferredGender
@@ -237,20 +256,53 @@ export class Matchmaker {
     if (!sessionId) return;
     const match = this.activeMatches.get(sessionId);
     if (!match) return;
-    const reportedId = match.socketA === reporterSocketId ? match.socketB : match.socketA;
-    createReport(sessionId, reporterSocketId, reportedId, reason, description);
 
-    if (checkAutoban(reportedId)) {
-      const reportedSocket = this.io.sockets.sockets.get(reportedId);
+    // Use actual user IDs (not socket IDs) so reports accumulate across reconnections
+    const reporterUserId = match.socketA === reporterSocketId ? match.userA : match.userB;
+    const reportedUserId = match.socketA === reporterSocketId ? match.userB : match.userA;
+    const reportedSocketId = match.socketA === reporterSocketId ? match.socketB : match.socketA;
+
+    createReport(sessionId, reporterUserId, reportedUserId, reason, description);
+
+    // Auto-ban: 3+ reports in the last hour triggers a progressive user ban
+    if (checkAutoban(reportedUserId)) {
+      const ban = createUserBan(reportedUserId, 'Auto-banned: multiple reports within 1 hour', 'system');
+      const reportedSocket = this.io.sockets.sockets.get(reportedSocketId);
       if (reportedSocket) {
-        const ip = this.getClientIp(reportedSocket);
-        createBan(ip, 'ip', 'Auto-ban: multiple reports', null, 'system');
-        reportedSocket.emit('banned', { reason: 'You have been banned due to multiple reports.' });
-        reportedSocket.disconnect();
+        const remainingDays = Math.max(1, Math.ceil(
+          (new Date(ban.expires_at).getTime() - Date.now()) / 86400000
+        ));
+        reportedSocket.emit('banned', {
+          reason: 'Auto-banned: multiple reports received.',
+          expiresAt: ban.expires_at,
+          remainingDays,
+        });
+        setTimeout(() => reportedSocket.disconnect(true), 300);
       }
     }
+
     this.io.to(reporterSocketId).emit('report-confirmed', {
       message: 'Report submitted. Thank you for helping keep the community safe.',
+    });
+  }
+
+  /**
+   * Block the reported user so they are never matched again.
+   * Called when a user emits the 'block-user' socket event.
+   */
+  blockUser(blockerSocketId: string): void {
+    const sessionId = this.socketToSession.get(blockerSocketId);
+    if (!sessionId) return;
+    const match = this.activeMatches.get(sessionId);
+    if (!match) return;
+
+    const blockerUserId = match.socketA === blockerSocketId ? match.userA : match.userB;
+    const blockedUserId = match.socketA === blockerSocketId ? match.userB : match.userA;
+
+    createBlock(blockerUserId, blockedUserId);
+
+    this.io.to(blockerSocketId).emit('block-confirmed', {
+      message: 'User blocked. You will not be matched with them again.',
     });
   }
 
