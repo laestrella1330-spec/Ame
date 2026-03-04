@@ -82,8 +82,9 @@
     </linearGradient>
   </defs>
 
-  <!-- Background — square, 420x420 -->
-  <rect width="420" height="420" fill="#030109"/>
+  <!-- Background — square, 420x420, purple so logo is visible in browser tabs -->
+  <rect width="420" height="420" fill="#4c1d95"/>
+  <rect width="420" height="420" fill="url(#hexBg)" opacity="0.5"/>
 
   <!-- All logo content shifted right by 10px to centre 400-wide art in 420-wide canvas -->
   <g transform="translate(10, 0)">
