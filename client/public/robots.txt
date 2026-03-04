@@ -1,0 +1,10 @@
+# Ame - Random Video Chat
+# https://amechatme.app
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /socket.io/
+
+Sitemap: https://amechatme.app/sitemap.xml

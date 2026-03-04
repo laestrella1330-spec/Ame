@@ -54,10 +54,11 @@ async function main() {
     contentSecurityPolicy: config.nodeEnv === 'production' ? {
       directives: {
         defaultSrc: ["'self'"],
-        scriptSrc: ["'self'"],
-        styleSrc: ["'self'", "'unsafe-inline'"],
+        scriptSrc: ["'self'", "https://connect.facebook.net"],
+        styleSrc: ["'self'", "'unsafe-inline'", "https://fonts.googleapis.com"],
+        fontSrc: ["'self'", "https://fonts.gstatic.com"],
         imgSrc: ["'self'", "blob:", "data:"],
-        connectSrc: ["'self'", "wss:", "ws:", "https://stun.l.google.com", "https://stun1.l.google.com"],
+        connectSrc: ["'self'", "wss:", "ws:", "https://stun.l.google.com", "https://stun1.l.google.com", "https://graph.facebook.com"],
         mediaSrc: ["'self'", "blob:"],
         frameSrc: ["'none'"],
       },
@@ -88,6 +89,50 @@ async function main() {
   // Stats (admin only)
   app.get('/api/stats', authMiddleware, (_req, res) => {
     res.json(matchmaker.getStats());
+  });
+
+  // ─── SEO: robots.txt ────────────────────────────────────────────────────────
+  app.get('/robots.txt', (_req, res) => {
+    res.type('text/plain').send(`# Ame - Random Video Chat
+# https://amechatme.app
+
+User-agent: *
+Allow: /
+Disallow: /api/
+Disallow: /admin/
+Disallow: /socket.io/
+
+Sitemap: https://amechatme.app/sitemap.xml
+`);
+  });
+
+  // ─── SEO: sitemap.xml ───────────────────────────────────────────────────────
+  app.get('/sitemap.xml', (_req, res) => {
+    res.type('application/xml').send(`<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  <url>
+    <loc>https://amechatme.app/</loc>
+    <lastmod>${new Date().toISOString().split('T')[0]}</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://amechatme.app/about</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://amechatme.app/privacy</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://amechatme.app/terms</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+</urlset>
+`);
   });
 
   // Serve client build in production
